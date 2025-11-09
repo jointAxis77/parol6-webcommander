@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/__pycache__/
+backend/*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
+frontend/.next/
+frontend/out/
+backend/build/
+backend/dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pm2-*.log
+logs/
+
+# Testing
+coverage/
+.pytest_cache/
+
+# Misc
+*.pid
+.pm2/
