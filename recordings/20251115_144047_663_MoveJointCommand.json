@@ -1,0 +1,1393 @@
+{
+  "metadata": {
+    "name": "MoveJointCommand_20251115_144047_663",
+    "timestamp": "2025-11-15T14:40:47.663973",
+    "robot_config": {
+      "com_port": "/dev/ttyACM0",
+      "baud_rate": 3000000
+    }
+  },
+  "commands": [
+    {
+      "command_id": "N/A",
+      "command_type": "MoveJointCommand",
+      "timestamp": "2025-11-15T14:40:47.663992",
+      "duration_s": 1.506502628326416,
+      "num_cycles": 151,
+      "cycle_stats": {
+        "avg_ms": 3.648531986669358,
+        "min_ms": 1.651327998843044,
+        "max_ms": 8.960304001448094
+      },
+      "phase_stats": {
+        "network_ms": 0.26305429801502533,
+        "processing_ms": 0.009745470210481959,
+        "execution_ms": 0.0,
+        "serial_ms": 3.2964127086771193,
+        "ik_manipulability_ms": 0.0,
+        "ik_solve_ms": 0.0
+      },
+      "samples": [
+        {
+          "cycle": 5.795924998892588,
+          "network": 0.19566599985409994,
+          "processing": 0.7976449996931478,
+          "execution": 0,
+          "serial": 1.6310319988406263,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.736520999358618,
+          "network": 0.17762900097295642,
+          "processing": 0.003962999471696094,
+          "execution": 0,
+          "serial": 4.489115000978927,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.9377720000193221,
+          "network": 0.17594400014786515,
+          "processing": 0.004240000635036267,
+          "execution": 0,
+          "serial": 1.7049010002665455,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 8.691230999829713,
+          "network": 0.17279599887842778,
+          "processing": 0.0042219999158987775,
+          "execution": 0,
+          "serial": 8.45506500081683,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.651327998843044,
+          "network": 0.014167000699671917,
+          "processing": 0.0029439997888403013,
+          "execution": 0,
+          "serial": 1.5873279990046285,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.498818998399656,
+          "network": 0.024684999516466632,
+          "processing": 0.003592998837120831,
+          "execution": 0,
+          "serial": 4.416727000716492,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.843935000782949,
+          "network": 1.135644999521901,
+          "processing": 0.004887999239144847,
+          "execution": 0,
+          "serial": 1.6586609999649227,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.846687999815913,
+          "network": 0.34012899959634524,
+          "processing": 0.0038890011637704447,
+          "execution": 0,
+          "serial": 4.456226000911556,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.0155490001343424,
+          "network": 0.18149999959859997,
+          "processing": 0.0041669991333037615,
+          "execution": 0,
+          "serial": 1.7746980010997504,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.671651999160531,
+          "network": 0.18194400036009029,
+          "processing": 0.003945000571548007,
+          "execution": 0,
+          "serial": 4.432151999935741,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.9472900003165705,
+          "network": 0.1749620005284669,
+          "processing": 0.004387999069876969,
+          "execution": 0,
+          "serial": 1.7140500003733905,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.589743999531493,
+          "network": 0.1828519998525735,
+          "processing": 0.004407000233186409,
+          "execution": 0,
+          "serial": 4.349912000179756,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.9525679999787826,
+          "network": 0.17149899940704927,
+          "processing": 0.003647999619715847,
+          "execution": 0,
+          "serial": 1.7252350007765926,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.675688998759142,
+          "network": 0.17796199972508475,
+          "processing": 0.004814000931219198,
+          "execution": 0,
+          "serial": 4.4300970002950635,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.027364000241505,
+          "network": 0.18187000023317523,
+          "processing": 0.003555000148480758,
+          "execution": 0,
+          "serial": 1.7801979993237182,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.423132999363588,
+          "network": 0.02903700078604743,
+          "processing": 0.005093001163913868,
+          "execution": 0,
+          "serial": 4.327022999859764,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.7355130003124941,
+          "network": 0.020073999621672556,
+          "processing": 0.0033520009310450405,
+          "execution": 0,
+          "serial": 1.6619949983578408,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 5.610759999399306,
+          "network": 1.1368479990778724,
+          "processing": 0.004777999492944218,
+          "execution": 0,
+          "serial": 4.418151998834219,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.1438450003188336,
+          "network": 0.3204610002285335,
+          "processing": 0.003776998710236512,
+          "execution": 0,
+          "serial": 1.7685120001260657,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.616169999280828,
+          "network": 0.19012899974768516,
+          "processing": 0.003945000571548007,
+          "execution": 0,
+          "serial": 4.363189000287093,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.9719939991773572,
+          "network": 0.1618509995751083,
+          "processing": 0.003406999894650653,
+          "execution": 0,
+          "serial": 1.7545500013511628,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.58105899997463,
+          "network": 0.17209200086654164,
+          "processing": 0.003666000338853337,
+          "execution": 0,
+          "serial": 4.352523001216468,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.840679000451928,
+          "network": 0.16225900071731303,
+          "processing": 0.003945000571548007,
+          "execution": 0,
+          "serial": 1.6200500012928387,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.711891999249929,
+          "network": 0.18598099995870143,
+          "processing": 0.004481000360101461,
+          "execution": 0,
+          "serial": 4.463392999241478,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8954560000565834,
+          "network": 0.17614699936530087,
+          "processing": 0.0032410007406724617,
+          "execution": 0,
+          "serial": 1.663050001297961,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.944798998621991,
+          "network": 0.1625179993425263,
+          "processing": 0.003962999471696094,
+          "execution": 0,
+          "serial": 4.718836000392912,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.094048999424558,
+          "network": 0.027555000997381285,
+          "processing": 0.004907000402454287,
+          "execution": 0,
+          "serial": 1.9977160009148065,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 6.941032999748131,
+          "network": 0.03520300015225075,
+          "processing": 0.006019001375534572,
+          "execution": 0,
+          "serial": 6.827884999438538,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 3.0441189992416184,
+          "network": 1.1173290004080627,
+          "processing": 0.0034259992389706895,
+          "execution": 0,
+          "serial": 1.878197999758413,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 5.8171660002699355,
+          "network": 0.320368999382481,
+          "processing": 0.003888999344781041,
+          "execution": 0,
+          "serial": 5.445982000310323,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.9734929992409889,
+          "network": 0.18486900080461055,
+          "processing": 0.0042219999158987775,
+          "execution": 0,
+          "serial": 1.7266060003748862,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.580466000334127,
+          "network": 0.17468400073994417,
+          "processing": 0.0034080003388226032,
+          "execution": 0,
+          "serial": 4.351633999249316,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.857511999332928,
+          "network": 0.17207400014740415,
+          "processing": 0.003166000169585459,
+          "execution": 0,
+          "serial": 1.6296800004056422,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.848984001000645,
+          "network": 0.17764800031727646,
+          "processing": 0.004444000296643935,
+          "execution": 0,
+          "serial": 4.614374000084354,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8951969996123808,
+          "network": 0.17364800078212284,
+          "processing": 0.004388999514048919,
+          "execution": 0,
+          "serial": 1.6601240004092688,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.593373998432071,
+          "network": 0.15411099957418628,
+          "processing": 0.00399999953515362,
+          "execution": 0,
+          "serial": 4.381505001219921,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.3254740008269437,
+          "network": 0.35633200059237424,
+          "processing": 0.0068520002969307825,
+          "execution": 0,
+          "serial": 1.8541049994382774,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.466780999791808,
+          "network": 0.03163000110362191,
+          "processing": 0.00555500082555227,
+          "execution": 0,
+          "serial": 4.365632999906666,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.9946789998357417,
+          "network": 0.03138800093438476,
+          "processing": 0.00522199843544513,
+          "execution": 0,
+          "serial": 1.887753000119119,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 5.714332999559701,
+          "network": 1.235939998878166,
+          "processing": 0.004629999239114113,
+          "execution": 0,
+          "serial": 4.421392999574891,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.989900998523808,
+          "network": 0.3359809998073615,
+          "processing": 0.004814000931219198,
+          "execution": 0,
+          "serial": 1.6024019987526117,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.578169999149395,
+          "network": 0.17892500000016298,
+          "processing": 0.003871000444632955,
+          "execution": 0,
+          "serial": 4.3410050002421485,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.872975000878796,
+          "network": 0.17164800010505132,
+          "processing": 0.0040739996620686725,
+          "execution": 0,
+          "serial": 1.6457910005556187,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.586337001455831,
+          "network": 0.19292499928269535,
+          "processing": 0.004407000233186409,
+          "execution": 0,
+          "serial": 4.330727000706247,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8770679998851847,
+          "network": 0.1762770007189829,
+          "processing": 0.004258999979356304,
+          "execution": 0,
+          "serial": 1.6429389997938415,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.5119849983166205,
+          "network": 0.16614699961792212,
+          "processing": 0.003962999471696094,
+          "execution": 0,
+          "serial": 4.289190001145471,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8710679996729596,
+          "network": 0.17724000099406112,
+          "processing": 0.004518000423558988,
+          "execution": 0,
+          "serial": 1.6350320001947694,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 8.960304001448094,
+          "network": 0.1704440001049079,
+          "processing": 0.004536999767879024,
+          "execution": 0,
+          "serial": 8.727397000257042,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.3770289990352467,
+          "network": 0.014369999917107634,
+          "processing": 0.002814000254147686,
+          "execution": 0,
+          "serial": 2.3077890000422485,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.766855001435033,
+          "network": 0.022741000066162087,
+          "processing": 0.004147999788983725,
+          "execution": 0,
+          "serial": 4.681503000028897,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.889119999963441,
+          "network": 1.1622000001807464,
+          "processing": 0.004462999640963972,
+          "execution": 0,
+          "serial": 1.676587000474683,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.93294700027036,
+          "network": 0.2892579996114364,
+          "processing": 0.003851999281323515,
+          "execution": 0,
+          "serial": 4.595039999912842,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.127419000316877,
+          "network": 0.1690360004431568,
+          "processing": 0.0035000011848751456,
+          "execution": 0,
+          "serial": 1.9022720007342286,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.619966999598546,
+          "network": 0.1778880014171591,
+          "processing": 0.004056000761920586,
+          "execution": 0,
+          "serial": 4.381986000225879,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.872364999144338,
+          "network": 0.16925799900491256,
+          "processing": 0.0028510003176052123,
+          "execution": 0,
+          "serial": 1.6471609997097403,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.601725999236805,
+          "network": 0.17551800010551233,
+          "processing": 0.00399999953515362,
+          "execution": 0,
+          "serial": 4.371152999738115,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 3.2828970015543746,
+          "network": 0.16522199985047337,
+          "processing": 0.004055998942931183,
+          "execution": 0,
+          "serial": 3.038601000298513,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.743984000015189,
+          "network": 0.2124620004906319,
+          "processing": 0.004685000021709129,
+          "execution": 0,
+          "serial": 4.463207000299008,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 5.914129000302637,
+          "network": 0.15885199900367297,
+          "processing": 0.0034450004022801295,
+          "execution": 0,
+          "serial": 5.692443999578245,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.340577999755624,
+          "network": 0.027314999897498637,
+          "processing": 0.004759998773806728,
+          "execution": 0,
+          "serial": 4.249153000273509,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.723642000797554,
+          "network": 0.024128999939421192,
+          "processing": 0.004352001269580796,
+          "execution": 0,
+          "serial": 1.631790999454097,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 5.609555999399163,
+          "network": 1.1071440003433963,
+          "processing": 0.004759000148624182,
+          "execution": 0,
+          "serial": 4.452077999303583,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.075104999676114,
+          "network": 0.33146200075862,
+          "processing": 0.004610999894794077,
+          "execution": 0,
+          "serial": 1.6924569990806049,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.598929999701795,
+          "network": 0.1838509997469373,
+          "processing": 0.004371000613900833,
+          "execution": 0,
+          "serial": 4.355170998678659,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8491789996915031,
+          "network": 0.16527700063306838,
+          "processing": 0.004462999640963972,
+          "execution": 0,
+          "serial": 1.6251619999820832,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.62441099989519,
+          "network": 0.1661669994064141,
+          "processing": 0.003647999619715847,
+          "execution": 0,
+          "serial": 4.401671001687646,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.584177000244381,
+          "network": 0.3876470000250265,
+          "processing": 0.006055999620002694,
+          "execution": 0,
+          "serial": 2.084011999613722,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 5.017705998398014,
+          "network": 0.2543880000303034,
+          "processing": 0.005129999408381991,
+          "execution": 0,
+          "serial": 4.674781001085648,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.898752998386044,
+          "network": 0.1858140003605513,
+          "processing": 0.003925999408238567,
+          "execution": 0,
+          "serial": 1.6498650002176873,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.7297809996962314,
+          "network": 0.15966600039973855,
+          "processing": 0.003667000783025287,
+          "execution": 0,
+          "serial": 4.508189000262064,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.6690510001353687,
+          "network": 0.024480999854858965,
+          "processing": 0.004518999048741534,
+          "execution": 0,
+          "serial": 1.5792909998708637,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.38009700155817,
+          "network": 0.026112000341527164,
+          "processing": 0.0040930008253781125,
+          "execution": 0,
+          "serial": 4.293856000003871,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.7863790000992594,
+          "network": 1.124070000514621,
+          "processing": 0.004759000148624182,
+          "execution": 0,
+          "serial": 1.6129389987327158,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.670762999012368,
+          "network": 0.3252219994465122,
+          "processing": 0.0038520011003129184,
+          "execution": 0,
+          "serial": 4.299078000258305,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.818679000280099,
+          "network": 0.17651800044404808,
+          "processing": 0.003795999873545952,
+          "execution": 0,
+          "serial": 1.5845500001887558,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.542984999716282,
+          "network": 0.17142499928013422,
+          "processing": 0.004129999069846235,
+          "execution": 0,
+          "serial": 4.297560999475536,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8489560006855754,
+          "network": 0.17436900088796392,
+          "processing": 0.00401900069846306,
+          "execution": 0,
+          "serial": 1.6166429995791987,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.59852200037858,
+          "network": 0.20188800044707023,
+          "processing": 0.004518000423558988,
+          "execution": 0,
+          "serial": 4.335653000453021,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.655824999237666,
+          "network": 0.31896199834591243,
+          "processing": 0.007519000064348802,
+          "execution": 0,
+          "serial": 2.2255669991864124,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.548262999378494,
+          "network": 0.19081400023424067,
+          "processing": 0.004462999640963972,
+          "execution": 0,
+          "serial": 4.296152001188602,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.9086789998254972,
+          "network": 0.1586660000612028,
+          "processing": 0.0034810000215657055,
+          "execution": 0,
+          "serial": 1.6885320001165383,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.4565600001078565,
+          "network": 0.030369999876711518,
+          "processing": 0.004612000338966027,
+          "execution": 0,
+          "serial": 4.355522998594097,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.7524760005471762,
+          "network": 0.01690700082690455,
+          "processing": 0.0027959995350101963,
+          "execution": 0,
+          "serial": 1.6846979997353628,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 5.603685000096448,
+          "network": 1.1717560009856243,
+          "processing": 0.005204001354286447,
+          "execution": 0,
+          "serial": 4.380133999802638,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.1124189988768194,
+          "network": 0.3199439997843001,
+          "processing": 0.004092999006388709,
+          "execution": 0,
+          "serial": 1.7396229995938484,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.633725000530831,
+          "network": 0.1722409997455543,
+          "processing": 0.0035749999369727448,
+          "execution": 0,
+          "serial": 4.401967000376317,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.9209570000384701,
+          "network": 0.1726099999359576,
+          "processing": 0.003406999894650653,
+          "execution": 0,
+          "serial": 1.6937910004344303,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.581430001053377,
+          "network": 0.1965179999388056,
+          "processing": 0.004333000106271356,
+          "execution": 0,
+          "serial": 4.320689000451239,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.880159999927855,
+          "network": 0.19094399976893328,
+          "processing": 0.003796998498728499,
+          "execution": 0,
+          "serial": 1.6292359996441519,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.57233700035431,
+          "network": 0.17327699970337562,
+          "processing": 0.003943998308386654,
+          "execution": 0,
+          "serial": 4.340744999353774,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8131050001102267,
+          "network": 0.16812899957585614,
+          "processing": 0.0038890011637704447,
+          "execution": 0,
+          "serial": 1.5883649994066218,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.6969470004114555,
+          "network": 0.1606109999556793,
+          "processing": 0.004223000360070728,
+          "execution": 0,
+          "serial": 4.475114999877405,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.7088460008380935,
+          "network": 0.02798200148390606,
+          "processing": 0.004444998921826482,
+          "execution": 0,
+          "serial": 1.6187170003831852,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.345578998254496,
+          "network": 0.020944999050698243,
+          "processing": 0.003314000423415564,
+          "execution": 0,
+          "serial": 4.270114999599173,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 3.229304000342381,
+          "network": 1.1310890004097018,
+          "processing": 0.004425999577506445,
+          "execution": 0,
+          "serial": 2.0468639995669946,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.84378100009053,
+          "network": 0.33446199995523784,
+          "processing": 0.0036849996831733733,
+          "execution": 0,
+          "serial": 4.459670999494847,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8741980002232594,
+          "network": 0.17805500101530924,
+          "processing": 0.004481000360101461,
+          "execution": 0,
+          "serial": 1.639013000385603,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.565411001749453,
+          "network": 0.19977699957962614,
+          "processing": 0.004610999894794077,
+          "execution": 0,
+          "serial": 4.303540999899269,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8777160003082827,
+          "network": 0.18840600023395382,
+          "processing": 0.004184999852441251,
+          "execution": 0,
+          "serial": 1.62753200129373,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.504837001150008,
+          "network": 0.17844400099420454,
+          "processing": 0.004278001142665744,
+          "execution": 0,
+          "serial": 4.271337998943636,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8801229998643976,
+          "network": 0.16894399959710427,
+          "processing": 0.004130000888835639,
+          "execution": 0,
+          "serial": 1.6516430005140137,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.563466000035987,
+          "network": 0.1696660001471173,
+          "processing": 0.0029809998522978276,
+          "execution": 0,
+          "serial": 4.337874001066666,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.1039930015831487,
+          "network": 0.16699899970262777,
+          "processing": 0.003519000529195182,
+          "execution": 0,
+          "serial": 1.8754380016616778,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.401356000016676,
+          "network": 0.030073999369051307,
+          "processing": 0.005222000254434533,
+          "execution": 0,
+          "serial": 4.30198599860887,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.6961420005827677,
+          "network": 0.017091999325202778,
+          "processing": 0.0028520007617771626,
+          "execution": 0,
+          "serial": 1.6277169997920282,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 5.666147999363602,
+          "network": 1.0798109997267602,
+          "processing": 0.004370000169728883,
+          "execution": 0,
+          "serial": 4.535003999990295,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.1417900006781565,
+          "network": 0.3091100006713532,
+          "processing": 0.0040930008253781125,
+          "execution": 0,
+          "serial": 1.781253000444849,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.65076299951761,
+          "network": 0.20716600010928232,
+          "processing": 0.004832998456549831,
+          "execution": 0,
+          "serial": 4.371708000689978,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.9051969993597595,
+          "network": 0.19531399993866216,
+          "processing": 0.004240000635036267,
+          "execution": 0,
+          "serial": 1.6469389993289951,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.541706999589223,
+          "network": 0.17520399887871463,
+          "processing": 0.003871000444632955,
+          "execution": 0,
+          "serial": 4.308448998926906,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8368649998592446,
+          "network": 0.1677959990047384,
+          "processing": 0.0033329997677356005,
+          "execution": 0,
+          "serial": 1.6134770012286026,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.559708000670071,
+          "network": 0.1848880001489306,
+          "processing": 0.004036999598611146,
+          "execution": 0,
+          "serial": 4.313114999604295,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8537910000304691,
+          "network": 0.1724619996821275,
+          "processing": 0.0037779991544084623,
+          "execution": 0,
+          "serial": 1.6256800008704886,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.80261399934534,
+          "network": 0.15885100037849043,
+          "processing": 0.0037219997466308996,
+          "execution": 0,
+          "serial": 4.584319000059622,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.7755860008037416,
+          "network": 0.03348099926370196,
+          "processing": 0.004999999873689376,
+          "execution": 0,
+          "serial": 1.6518470001756214,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.383948000395321,
+          "network": 0.024740998924244195,
+          "processing": 0.003963001290685497,
+          "execution": 0,
+          "serial": 4.299540998545126,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 3.7504880001506535,
+          "network": 1.2508109994087135,
+          "processing": 0.004925999746774323,
+          "execution": 0,
+          "serial": 2.443491999656544,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 7.79121499908797,
+          "network": 0.4561280002235435,
+          "processing": 0.006573998689418659,
+          "execution": 0,
+          "serial": 7.260698999743909,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.7200459990126546,
+          "network": 0.2846469997166423,
+          "processing": 0.005333999069989659,
+          "execution": 0,
+          "serial": 2.3465479989681626,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 7.457068000803702,
+          "network": 0.2361290007684147,
+          "processing": 0.006148000466055237,
+          "execution": 0,
+          "serial": 7.139236000512028,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.5820289993134793,
+          "network": 0.21572100013145246,
+          "processing": 0.005111000064061955,
+          "execution": 0,
+          "serial": 2.2674179999739863,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 8.695397000337834,
+          "network": 0.23364799926639535,
+          "processing": 0.0055559994507348165,
+          "execution": 0,
+          "serial": 8.381397999983164,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.7936389997194055,
+          "network": 0.2471289990353398,
+          "processing": 0.03638900125224609,
+          "execution": 0,
+          "serial": 2.423344001726946,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 7.531661000029999,
+          "network": 0.24351700085389894,
+          "processing": 0.005702999260392971,
+          "execution": 0,
+          "serial": 7.202050001069438,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.6923429995804327,
+          "network": 0.197055000171531,
+          "processing": 0.0038149992178659886,
+          "execution": 0,
+          "serial": 2.4202889999287436,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 7.200531999842497,
+          "network": 0.039962000300874934,
+          "processing": 0.006297001164057292,
+          "execution": 0,
+          "serial": 7.069551000313368,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.3513630003435537,
+          "network": 0.02375899930484593,
+          "processing": 0.00372300019080285,
+          "execution": 0,
+          "serial": 2.2571219997189473,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 6.997310998485773,
+          "network": 1.636401999348891,
+          "processing": 0.00955500036070589,
+          "execution": 0,
+          "serial": 5.233593999946606,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.106826999806799,
+          "network": 0.3383880011824658,
+          "processing": 0.004111001544515602,
+          "execution": 0,
+          "serial": 1.7189570007758448,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.578541000228142,
+          "network": 0.17561099957674742,
+          "processing": 0.004776999048772268,
+          "execution": 0,
+          "serial": 4.344078999565681,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.920197000799817,
+          "network": 0.17901799947139807,
+          "processing": 0.004462999640963972,
+          "execution": 0,
+          "serial": 1.6834019988891669,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.527559000052861,
+          "network": 0.14318500143417623,
+          "processing": 0.0032770003599580377,
+          "execution": 0,
+          "serial": 4.331744999944931,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8419570005789865,
+          "network": 0.1667769993218826,
+          "processing": 0.003499999365885742,
+          "execution": 0,
+          "serial": 1.622198000404751,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.678004001107183,
+          "network": 0.1803699997253716,
+          "processing": 0.0042219999158987775,
+          "execution": 0,
+          "serial": 4.434206999576418,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8744749995676102,
+          "network": 0.1792029997886857,
+          "processing": 0.003110999386990443,
+          "execution": 0,
+          "serial": 1.5742350005893968,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.742003000501427,
+          "network": 0.16064699957496487,
+          "processing": 0.0038700000004610047,
+          "execution": 0,
+          "serial": 4.517818999374867,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8167340003856225,
+          "network": 0.04475899913813919,
+          "processing": 0.005943998985458165,
+          "execution": 0,
+          "serial": 1.6835320002428489,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.371336999611231,
+          "network": 0.03044400000362657,
+          "processing": 0.004333000106271356,
+          "execution": 0,
+          "serial": 4.268097000021953,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 3.28793299922836,
+          "network": 1.1946809991059126,
+          "processing": 0.004796000212081708,
+          "execution": 0,
+          "serial": 2.039938000962138,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.956335998940631,
+          "network": 0.3099250006926013,
+          "processing": 0.004110999725526199,
+          "execution": 0,
+          "serial": 4.596930000843713,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.877530999990995,
+          "network": 0.1803699997253716,
+          "processing": 0.004036999598611146,
+          "execution": 0,
+          "serial": 1.6382350004278123,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.577521998726297,
+          "network": 0.17846199989435263,
+          "processing": 0.004056000761920586,
+          "execution": 0,
+          "serial": 4.342985999755911,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.8882720014516963,
+          "network": 0.16642499940644484,
+          "processing": 0.003518000085023232,
+          "execution": 0,
+          "serial": 1.666883999860147,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.517874000157462,
+          "network": 0.1878140010376228,
+          "processing": 0.00401800025429111,
+          "execution": 0,
+          "serial": 4.273079000995494,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.842735000536777,
+          "network": 0.17449999904783908,
+          "processing": 0.003815001036855392,
+          "execution": 0,
+          "serial": 1.6092170008050743,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.516336999586201,
+          "network": 0.16437000158475712,
+          "processing": 0.0039810001908335835,
+          "execution": 0,
+          "serial": 4.296727000109968,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.2074930002418114,
+          "network": 0.1673520000622375,
+          "processing": 0.0036849996831733733,
+          "execution": 0,
+          "serial": 1.9779750000452623,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 4.412374999446911,
+          "network": 0.030982000680523925,
+          "processing": 0.004630001058103517,
+          "execution": 0,
+          "serial": 4.310319000069285,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 1.7274390011152718,
+          "network": 0.026739999157143757,
+          "processing": 0.0041290004446636885,
+          "execution": 0,
+          "serial": 1.6354949984815903,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 5.950443999608979,
+          "network": 1.0826630004885374,
+          "processing": 0.003740999090950936,
+          "execution": 0,
+          "serial": 4.817742999875918,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        },
+        {
+          "cycle": 2.048344998911489,
+          "network": 0.32833299883350264,
+          "processing": 0.003778000973397866,
+          "execution": 0,
+          "serial": 1.671476000410621,
+          "ik_manipulability": 0,
+          "ik_solve": 0
+        }
+      ]
+    }
+  ]
+}

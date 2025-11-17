@@ -1,0 +1,2245 @@
+"""
+FastAPI server for PAROL6 Robot - HTTP/WebSocket bridge
+"""
+
+# Remove sys.path hacks - now using proper lib/ package structure
+import sys
+import os
+from pathlib import Path
+
+# Get project root (parent of api directory)
+PROJECT_ROOT = Path(__file__).parent.parent
+
+# Apply numpy compatibility patch for numpy 2.0+
+from lib.utils import numpy_patch
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse, Response
+from contextlib import asynccontextmanager
+import asyncio
+import logging
+from typing import Optional, Dict, Any
+import uuid
+from datetime import datetime
+import yaml
+import json
+import xml.etree.ElementTree as ET
+import shutil
+import base64
+
+# Import robot client (UDP client to commander) and models
+import robot_client
+from lib.models.api_models import *
+from websocket_manager import ConnectionManager
+from lib.utils.logging_handler import get_websocket_handler, setup_logging
+from camera_manager import get_camera_manager
+
+# Import IK solver and robot model from lib/
+import numpy as np
+from spatialmath import SE3
+from lib.kinematics import robot_model as PAROL6_ROBOT
+from lib.kinematics.trajectory_math import solve_ik_with_adaptive_tol_subdivision
+
+# Configuration file path
+CONFIG_PATH = PROJECT_ROOT / "config.yaml"
+
+# Load configuration from root directory
+try:
+    with open(CONFIG_PATH, "r") as f:
+        config = yaml.safe_load(f)
+except FileNotFoundError:
+    logger.warning("config.yaml not found in root directory, using defaults")
+    config = {
+        'api': {
+            'host': '0.0.0.0',
+            'port': 8000,
+            'cors_origins': ['http://localhost:3000', 'http://localhost:3001']
+        },
+        'logging': {
+            'level': 'INFO',
+            'buffer_size': 1000,
+            'stream_to_websocket': True
+        }
+    }
+
+# Set up logging with WebSocket handler
+setup_logging(config.get('logging', {}), 'api')
+logger = logging.getLogger('api')
+
+# Global variables
+manager = ConnectionManager()
+robot_status_task: Optional[asyncio.Task] = None
+command_results: Dict[str, CommandAcknowledgment] = {}
+
+# Connect WebSocket handler to manager
+websocket_handler = get_websocket_handler()
+websocket_handler.set_websocket_manager(manager)
+
+
+# UDP Log Receiver Task
+async def udp_log_receiver():
+    """
+    Background task to receive log messages from headless_commander via UDP
+    and inject them into the WebSocket log stream
+    """
+    log_forward_port = config.get('server', {}).get('log_forward_port', 5003)
+
+    logger.info(f"Starting UDP log receiver on port {log_forward_port}")
+
+    # Create UDP socket
+    import socket as sync_socket
+    sock = sync_socket.socket(sync_socket.AF_INET, sync_socket.SOCK_DGRAM)
+    sock.bind(('0.0.0.0', log_forward_port))
+    sock.setblocking(False)
+
+    loop = asyncio.get_event_loop()
+
+    while True:
+        try:
+            # Non-blocking receive
+            data = await loop.run_in_executor(None, sock.recvfrom, 8192)
+            message, addr = data
+
+            # Parse JSON log entry
+            try:
+                log_entry = json.loads(message.decode('utf-8'))
+
+                # Inject into WebSocket handler's buffer
+                websocket_handler.logs.append(log_entry)
+
+                # Broadcast to WebSocket clients
+                await manager.broadcast_json({
+                    "type": "log",
+                    "data": log_entry
+                }, "logs")
+
+            except json.JSONDecodeError:
+                logger.warning(f"Received invalid JSON log from {addr}")
+
+        except BlockingIOError:
+            # No data available, wait a bit
+            await asyncio.sleep(0.01)
+        except Exception as e:
+            logger.error(f"Error in UDP log receiver: {e}")
+            await asyncio.sleep(0.1)
+
+
+# Lifespan context manager for startup/shutdown
+udp_log_task: Optional[asyncio.Task] = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle"""
+    # Startup
+    logger.info("Starting FastAPI server for PAROL6 Robot")
+
+    # Start background task for robot status streaming
+    global robot_status_task, udp_log_task
+    robot_status_task = asyncio.create_task(stream_robot_status())
+
+    # Start UDP log receiver if enabled
+    if config.get('server', {}).get('log_forward_enabled', True):
+        udp_log_task = asyncio.create_task(udp_log_receiver())
+
+    yield
+
+    # Shutdown
+    logger.info("Shutting down FastAPI server")
+    if robot_status_task:
+        robot_status_task.cancel()
+        try:
+            await robot_status_task
+        except asyncio.CancelledError:
+            pass
+
+    if udp_log_task:
+        udp_log_task.cancel()
+        try:
+            await udp_log_task
+        except asyncio.CancelledError:
+            pass
+
+
+# Create FastAPI app
+app = FastAPI(
+    title="PAROL6 Robot API",
+    description="""
+RESTful API and WebSocket interface for PAROL6 robot control.
+
+## Motion Types Guide
+
+### Joint-Interpolated Motion (Move Pose)
+- All joints move simultaneously to reach target
+- Path may be curved in 3D space  
+- Faster execution
+- Best for: Pick-and-place, position-to-position moves
+
+### Cartesian Motion (Move Cartesian)
+- End-effector follows straight line path
+- Joints coordinate to maintain linear trajectory
+- May be slower than joint motion
+- Best for: Welding, painting, insertion, drawing
+
+### Smooth Motion Commands
+- **Circle**: Circular paths in XY, XZ, or YZ planes
+- **Arc**: Curved paths between two points
+- **Spline**: Smooth curves through multiple waypoints
+- **Helix**: Spiral/helical paths
+
+## WebSocket Real-time Data
+Connect to `/ws` for streaming robot telemetry at configurable rates (1-50Hz).
+""",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Configure CORS from config
+cors_origins = config.get('api', {}).get('cors_origins', ["http://localhost:3000", "http://localhost:3001"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# API Request Logging Middleware
+@app.middleware("http")
+async def log_api_requests(request, call_next):
+    """Log all API requests with appropriate log levels"""
+    # Get request details
+    method = request.method
+    path = request.url.path
+    query_params = dict(request.query_params) if request.query_params else None
+
+    # Determine if this is a robot command endpoint
+    robot_command_paths = [
+        "/api/robot/move/", "/api/robot/jog/", "/api/robot/home",
+        "/api/robot/stop", "/api/robot/gripper/", "/api/robot/motion/",
+        "/api/robot/delay"
+    ]
+    is_robot_command = any(path.startswith(cmd) for cmd in robot_command_paths)
+
+    # Read body for POST requests (only for logging, must re-create for handler)
+    body_summary = None
+    if method in ["POST", "PUT", "PATCH"]:
+        try:
+            body = await request.body()
+            # Decode and truncate body for logging
+            body_text = body.decode('utf-8')
+            if len(body_text) > 200:
+                body_summary = body_text[:200] + "..."
+            else:
+                body_summary = body_text if body_text else None
+
+            # Re-create request with body for actual handler
+            async def receive():
+                return {"type": "http.request", "body": body}
+            request._receive = receive
+        except:
+            body_summary = None
+
+    # Format log message
+    log_parts = [f"{method} {path}"]
+    if query_params:
+        log_parts.append(f"params={query_params}")
+    if body_summary:
+        log_parts.append(f"body={body_summary}")
+    log_message = f"[API] {' - '.join(log_parts)}"
+
+    # Log at appropriate level
+    if is_robot_command:
+        logger.info(log_message)
+    else:
+        logger.debug(log_message)
+
+    # Process request
+    response = await call_next(request)
+
+    return response
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def parse_robot_status() -> RobotStatus:
+    """Get current robot status from robot_api"""
+    try:
+        # Get all status data
+        pose_data = robot_client.get_robot_pose()
+        joint_data = robot_client.get_robot_joint_angles()
+        speed_data = robot_client.get_robot_joint_speeds()
+        io_data = robot_client.get_robot_io()
+        gripper_data = robot_client.get_electric_gripper_status()
+        homed_data = robot_client.get_homed_status()
+        commander_hz = robot_client.get_commander_hz()
+
+        # Build status object
+        # Only set is_stopped/estop_active if we have data, otherwise leave as None
+        # NOTE: estop_active tracks the SOFTWARE e-stop flag (blocks motion until cleared),
+        # not the physical button (available in ioStatus.estop_pressed)
+        status = RobotStatus(
+            is_stopped=robot_client.is_robot_stopped() if speed_data else None,
+            estop_active=robot_client.get_software_estop_status(),
+            homed=homed_data,
+            commander_hz=commander_hz
+        )
+        
+        if pose_data:
+            status.pose = RobotPose(
+                x=pose_data[0],
+                y=pose_data[1],
+                z=pose_data[2],
+                roll=pose_data[3],
+                pitch=pose_data[4],
+                yaw=pose_data[5]
+            )
+            
+        if joint_data:
+            status.joints = JointAngles(angles=joint_data)
+            
+        if speed_data:
+            status.speeds = JointSpeeds(speeds=speed_data)
+            
+        if io_data and len(io_data) >= 5:
+            status.io = IOStatus(
+                input_1=bool(io_data[0]),
+                input_2=bool(io_data[1]),
+                output_1=bool(io_data[2]),
+                output_2=bool(io_data[3]),
+                estop_pressed=io_data[4] == 0
+            )
+            
+        if gripper_data and len(gripper_data) >= 6:
+            status_byte = gripper_data[4]
+            status.gripper = GripperStatus(
+                device_id=gripper_data[0],
+                position=gripper_data[1],
+                speed=gripper_data[2],
+                current=gripper_data[3],
+                status_byte=status_byte,
+                object_detected=gripper_data[5],
+                is_calibrated=(status_byte & 0b10000000) != 0,
+                is_active=(status_byte & 0b00000001) != 0,
+                is_moving=(status_byte & 0b00000010) != 0
+            )
+            
+        return status
+        
+    except Exception as e:
+        logger.error(f"Error parsing robot status: {e}")
+        return RobotStatus(is_stopped=None, estop_active=None)
+
+
+async def stream_robot_status():
+    """Background task to stream robot status via WebSocket"""
+    logger.info("Starting robot status streaming task")
+
+    while True:
+        try:
+            # Only fetch and broadcast if we have connected clients
+            if manager.get_connection_count() > 0:
+                status = await asyncio.to_thread(parse_robot_status)
+                await manager.broadcast_robot_status(status)
+
+            # Sleep based on highest client rate (minimum interval)
+            if manager.update_rates:
+                max_rate = max(manager.update_rates.values())
+                sleep_time = 1.0 / max_rate
+            else:
+                sleep_time = 0.1  # Default 10Hz
+
+            await asyncio.sleep(sleep_time)
+
+        except asyncio.CancelledError:
+            logger.info("Robot status streaming task cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Error in status streaming: {e}")
+            await asyncio.sleep(1.0)  # Back off on error
+
+
+def execute_robot_command(func, *args, **kwargs) -> CommandResponse:
+    """Execute a robot command and return response"""
+    try:
+        # Execute command
+        result = func(*args, **kwargs)
+        
+        # Handle different response types
+        if isinstance(result, dict):
+            # Command with acknowledgment
+            return CommandResponse(
+                success=result.get('status') not in ['FAILED', 'INVALID'],
+                command_id=result.get('command_id'),
+                message=result.get('details', 'Command executed'),
+                status=result.get('status'),
+                details=result.get('details')
+            )
+        elif isinstance(result, str):
+            # Simple command response
+            if result.startswith("Command sent with tracking"):
+                # Extract command ID
+                cmd_id = result.split("ID: ")[-1].rstrip(")")
+                return CommandResponse(
+                    success=True,
+                    command_id=cmd_id,
+                    message=result,
+                    status="SENT"
+                )
+            else:
+                return CommandResponse(
+                    success=not result.startswith("Error"),
+                    message=result
+                )
+        elif result is None:
+            # Non-blocking command that returned command ID
+            return CommandResponse(
+                success=True,
+                command_id=str(result) if result else None,
+                message="Command sent",
+                status="SENT"
+            )
+        else:
+            # Unknown response type
+            return CommandResponse(
+                success=True,
+                message=str(result)
+            )
+            
+    except Exception as e:
+        logger.error(f"Error executing robot command: {e}")
+        return CommandResponse(
+            success=False,
+            message=f"Error: {str(e)}",
+            status="FAILED"
+        )
+
+
+# ============================================================================
+# REST API Endpoints
+# ============================================================================
+
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "message": "PAROL6 Robot API Server",
+        "version": "1.0.0",
+        "endpoints": {
+            "docs": "/docs",
+            "websocket": "/ws",
+            "robot_status": "/api/robot/status"
+        }
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "websocket_clients": manager.get_connection_count()
+    }
+
+
+# Status Endpoints
+@app.get("/api/robot/status", response_model=RobotStatus)
+async def get_robot_status():
+    """Get complete robot status"""
+    return parse_robot_status()
+
+
+@app.get("/api/robot/pose", response_model=RobotPose)
+async def get_robot_pose():
+    """Get robot end-effector pose"""
+    pose_data = robot_client.get_robot_pose()
+    if not pose_data:
+        raise HTTPException(status_code=503, detail="Failed to get robot pose")
+    
+    return RobotPose(
+        x=pose_data[0],
+        y=pose_data[1],
+        z=pose_data[2],
+        roll=pose_data[3],
+        pitch=pose_data[4],
+        yaw=pose_data[5]
+    )
+
+
+@app.get("/api/robot/joints", response_model=JointAngles)
+async def get_robot_joints():
+    """Get robot joint angles"""
+    joint_data = robot_client.get_robot_joint_angles()
+    if not joint_data:
+        raise HTTPException(status_code=503, detail="Failed to get joint angles")
+    
+    return JointAngles(angles=joint_data)
+
+
+@app.get("/api/robot/speeds", response_model=JointSpeeds)
+async def get_robot_speeds():
+    """Get robot joint speeds"""
+    speed_data = robot_client.get_robot_joint_speeds()
+    if not speed_data:
+        raise HTTPException(status_code=503, detail="Failed to get joint speeds")
+    
+    return JointSpeeds(speeds=speed_data)
+
+
+@app.get("/api/robot/io", response_model=IOStatus)
+async def get_robot_io():
+    """Get digital I/O status"""
+    io_data = robot_client.get_robot_io()
+    if not io_data or len(io_data) < 5:
+        raise HTTPException(status_code=503, detail="Failed to get I/O status")
+    
+    return IOStatus(
+        input_1=bool(io_data[0]),
+        input_2=bool(io_data[1]),
+        output_1=bool(io_data[2]),
+        output_2=bool(io_data[3]),
+        estop_pressed=io_data[4] == 0
+    )
+
+
+@app.get("/api/robot/gripper", response_model=GripperStatus)
+async def get_gripper_status():
+    """Get electric gripper status"""
+    gripper_data = robot_client.get_electric_gripper_status()
+    if not gripper_data or len(gripper_data) < 6:
+        raise HTTPException(status_code=503, detail="Failed to get gripper status")
+
+    status_byte = gripper_data[4]
+    return GripperStatus(
+        device_id=gripper_data[0],
+        position=gripper_data[1],
+        speed=gripper_data[2],
+        current=gripper_data[3],
+        status_byte=status_byte,
+        object_detected=gripper_data[5],
+        is_calibrated=(status_byte & 0b10000000) != 0,
+        is_active=(status_byte & 0b00000001) != 0,
+        is_moving=(status_byte & 0b00000010) != 0
+    )
+
+
+# IK Solver Endpoint
+@app.post("/api/ik", response_model=IKResponse)
+async def solve_inverse_kinematics(request: IKRequest):
+    """
+    Solve inverse kinematics for a target pose
+
+    Uses the same backend IK solver as actual robot motion (solve_ik_with_adaptive_tol_subdivision).
+    This ensures IK solutions are consistent with what the robot would execute.
+
+    **Features:**
+    - Adaptive tolerance based on manipulability (near singularities)
+    - Recursive subdivision for difficult poses
+    - Angle unwrapping for continuous solutions
+    - Joint limit validation
+
+    **Use cases:**
+    - Validate poses before execution
+    - Compare frontend IK vs backend IK
+    - Pre-compute joint angles for cartesian targets
+    """
+    import time
+    start_time = time.time()
+
+    try:
+        # Log raw request at DEBUG level
+        logger.debug(f"[IK] Raw request: {request.dict()}")
+
+        # Convert inputs
+        target_pose_mm = request.target_pose  # [x, y, z, rx, ry, rz] in mm and degrees
+        current_joints_deg = request.current_joints
+
+        # High-level request summary at INFO level
+        logger.info(f"[IK] Request: Target=[{target_pose_mm[0]:.1f}, {target_pose_mm[1]:.1f}, {target_pose_mm[2]:.1f}, {target_pose_mm[3]:.1f}°, {target_pose_mm[4]:.1f}°, {target_pose_mm[5]:.1f}°], Seed={[f'{j:.1f}°' for j in current_joints_deg]}")
+        logger.info(f"[IK] Quaternion in request: {request.target_quaternion if request.target_quaternion else 'None'}")
+
+        # Convert pose to SE3 (mm to meters, degrees to radians)
+        x, y, z = target_pose_mm[0] / 1000, target_pose_mm[1] / 1000, target_pose_mm[2] / 1000
+        logger.debug(f"[IK] Coordinate conversion: mm→m: [{x:.4f}, {y:.4f}, {z:.4f}]")
+
+        # Create SE3 pose - prefer quaternion if provided (avoids gimbal lock)
+        logger.info(f"[IK] Checking quaternion: {request.target_quaternion is not None}, value: {request.target_quaternion}")
+        if request.target_quaternion:
+            # Use quaternion for orientation (unambiguous, no gimbal lock)
+            qw, qx, qy, qz = request.target_quaternion
+            logger.info(f"[IK] Using quaternion input: w={qw:.4f}, x={qx:.4f}, y={qy:.4f}, z={qz:.4f}")
+            # UnitQuaternion expects [s, vx, vy, vz] format (scalar first)
+            from spatialmath import UnitQuaternion
+            quat = UnitQuaternion([qw, qx, qy, qz])
+            target_se3 = SE3.Trans(x, y, z) * quat.SE3()
+        else:
+            # Fall back to Euler angles (backwards compatibility)
+            rx, ry, rz = np.radians(target_pose_mm[3]), np.radians(target_pose_mm[4]), np.radians(target_pose_mm[5])
+            logger.debug(f"[IK] Euler angles (deg→rad): RX={target_pose_mm[3]:.2f}°→{rx:.4f}, RY={target_pose_mm[4]:.2f}°→{ry:.4f}, RZ={target_pose_mm[5]:.2f}°→{rz:.4f}")
+            target_se3 = SE3.Trans(x, y, z) * SE3.RPY([rx, ry, rz], order='xyz')
+
+        # Convert current joints to radians
+        current_q_rad = np.radians(current_joints_deg)
+        logger.debug(f"[IK] Current joints (rad): {current_q_rad}")
+
+        # Log target SE3 details at DEBUG level
+        logger.debug(f"[IK] Target SE3 translation (m): {target_se3.t}")
+        logger.debug(f"[IK] Target SE3 rotation matrix:\n{target_se3.R}")
+        target_rpy = target_se3.rpy(order='xyz', unit='deg')
+        logger.debug(f"[IK] Target SE3 RPY (xyz, deg): RX={target_rpy[0]:.2f}, RY={target_rpy[1]:.2f}, RZ={target_rpy[2]:.2f}")
+
+        # Log current robot pose for comparison at DEBUG level
+        current_pose = PAROL6_ROBOT.robot.fkine(current_q_rad)
+        current_rpy = current_pose.rpy(order='xyz', unit='deg')
+        logger.debug(f"[IK] Current pose translation (m): {current_pose.t}")
+        logger.debug(f"[IK] Current pose RPY (xyz, deg): RX={current_rpy[0]:.2f}, RY={current_rpy[1]:.2f}, RZ={current_rpy[2]:.2f}")
+
+        # Solve IK using backend solver (run in thread to avoid blocking)
+        logger.info(f"[IK] Calling solve_ik_with_adaptive_tol_subdivision (max_depth=4, ilimit=100)")
+        ik_result = await asyncio.to_thread(
+            solve_ik_with_adaptive_tol_subdivision,
+            PAROL6_ROBOT.robot,
+            target_se3,
+            current_q_rad,
+            max_depth=4,
+            ilimit=100,
+            jogging=False
+        )
+
+        # Calculate elapsed time
+        elapsed_ms = (time.time() - start_time) * 1000
+
+        # Log IK result at appropriate levels
+        iterations = getattr(ik_result, 'iterations', 'N/A')
+        residual = getattr(ik_result, 'residual', 'N/A')
+
+        if ik_result.success:
+            result_joints_deg = np.degrees(ik_result.q)
+            logger.info(f"[IK] ✓ Success in {elapsed_ms:.1f}ms: joints={[f'{j:.1f}°' for j in result_joints_deg]}, iterations={iterations}, residual={residual}")
+            logger.debug(f"[IK] Solution joints (rad): {ik_result.q}")
+        else:
+            reason = getattr(ik_result, 'reason', 'Unknown')
+            logger.warning(f"[IK] ✗ Failed in {elapsed_ms:.1f}ms: {reason}, iterations={iterations}")
+
+        # Build response
+        if ik_result.success:
+            # Convert result back to degrees
+            joints_deg = np.degrees(ik_result.q).tolist()
+
+            response = IKResponse(
+                success=True,
+                joints=joints_deg,
+                error=None,
+                iterations=ik_result.iterations if hasattr(ik_result, 'iterations') else None,
+                residual=float(ik_result.residual) if hasattr(ik_result, 'residual') else None
+            )
+        else:
+            response = IKResponse(
+                success=False,
+                joints=None,
+                error=ik_result.reason if hasattr(ik_result, 'reason') else "IK solution failed",
+                iterations=ik_result.iterations if hasattr(ik_result, 'iterations') else None,
+                residual=None
+            )
+
+        # Log response at DEBUG level
+        logger.debug(f"[IK] Response: {response.dict()}")
+        return response
+
+    except Exception as e:
+        elapsed_ms = (time.time() - start_time) * 1000
+        logger.error(f"[IK] ✗ Exception in {elapsed_ms:.1f}ms: {e}", exc_info=True)
+        return IKResponse(
+            success=False,
+            joints=None,
+            error=f"IK solver error: {str(e)}",
+            iterations=None,
+            residual=None
+        )
+
+
+# Batch IK Solver Endpoint
+@app.post("/api/ik/batch", response_model=BatchIKResponse)
+async def solve_batch_inverse_kinematics(request: BatchIKRequest):
+    """
+    Solve IK for multiple Cartesian waypoints in sequence.
+
+    This is optimized for Cartesian motion planning:
+    - Uses previous IK solution as seed for next waypoint (faster convergence)
+    - Returns precise error location if IK fails
+    - Validates joint velocity limits between waypoints
+    - Uses same backend IK solver as robot execution (consistency guaranteed)
+
+    **Use case:** Pre-compute joint trajectory for Cartesian straight-line motion
+    """
+    import time
+    start_time = time.time()
+
+    try:
+        waypoints = request.waypoints
+        total_waypoints = len(waypoints)
+        use_previous_as_seed = request.use_previous_as_seed
+
+        logger.info(f"[BatchIK] Starting batch IK for {total_waypoints} waypoints (use_previous_as_seed={use_previous_as_seed})")
+
+        # Initialize seed joints
+        if request.seed_joints:
+            current_q_deg = request.seed_joints
+            logger.debug(f"[BatchIK] Using provided seed: {[f'{j:.1f}°' for j in current_q_deg]}")
+        else:
+            # Use current robot position as seed
+            status = robot_client.get_robot_status()
+            if status and 'joints' in status:
+                current_q_deg = [np.degrees(PAROL6_ROBOT.STEPS2RADS(s, i))
+                                for i, s in enumerate(status['joints'])]
+                logger.debug(f"[BatchIK] Using current robot position as seed")
+            else:
+                # Fallback to home position
+                current_q_deg = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                logger.warning(f"[BatchIK] No seed provided and robot status unavailable, using home position")
+
+        joint_trajectory = []
+        warnings = []
+        current_q_rad = np.radians(current_q_deg)
+
+        # Solve IK for each waypoint
+        for i, waypoint in enumerate(waypoints):
+            # Convert waypoint to SE3
+            x, y, z = waypoint[0] / 1000, waypoint[1] / 1000, waypoint[2] / 1000
+            rx, ry, rz = np.radians(waypoint[3]), np.radians(waypoint[4]), np.radians(waypoint[5])
+            target_se3 = SE3.Trans(x, y, z) * SE3.RPY([rx, ry, rz], order='xyz')
+
+            # Solve IK (use previous solution as seed if enabled)
+            ik_result = await asyncio.to_thread(
+                solve_ik_with_adaptive_tol_subdivision,
+                PAROL6_ROBOT.robot,
+                target_se3,
+                current_q_rad,
+                max_depth=4,
+                ilimit=100,
+                jogging=False
+            )
+
+            if not ik_result.success:
+                elapsed_s = time.time() - start_time
+                reason = getattr(ik_result, 'reason', 'IK solution failed')
+                logger.warning(f"[BatchIK] Failed at waypoint {i}/{total_waypoints} after {elapsed_s:.2f}s: {reason}")
+
+                return BatchIKResponse(
+                    success=False,
+                    joint_trajectory=None,
+                    failed_at=i,
+                    error=f"IK failed at waypoint {i}: {reason}",
+                    warnings=warnings,
+                    total_waypoints=total_waypoints,
+                    planning_time_s=elapsed_s
+                )
+
+            # Store solution
+            solution_joints_deg = np.degrees(ik_result.q).tolist()
+            joint_trajectory.append(solution_joints_deg)
+
+            # Validate velocity limits between waypoints
+            if i > 0:
+                prev_joints = joint_trajectory[i-1]
+                for j in range(6):
+                    # Calculate step difference (assuming INTERVAL_S = 0.01)
+                    prev_steps = PAROL6_ROBOT.DEG2STEPS(prev_joints[j], j)
+                    curr_steps = PAROL6_ROBOT.DEG2STEPS(solution_joints_deg[j], j)
+                    step_diff = abs(curr_steps - prev_steps)
+
+                    # Max steps per cycle (0.01s at 100Hz)
+                    max_step_per_cycle = PAROL6_ROBOT.Joint_max_speed[j] * 0.01
+
+                    if step_diff > max_step_per_cycle * 1.2:  # 20% safety margin
+                        warnings.append({
+                            "type": "velocity_limit",
+                            "waypoint": i,
+                            "joint": j,
+                            "step_diff": int(step_diff),
+                            "limit": int(max_step_per_cycle),
+                            "message": f"Joint {j+1} velocity limit exceeded at waypoint {i}"
+                        })
+
+            # Update seed for next iteration
+            if use_previous_as_seed:
+                current_q_rad = ik_result.q
+
+            # Progress logging every 50 waypoints
+            if (i + 1) % 50 == 0 or (i + 1) == total_waypoints:
+                logger.info(f"[BatchIK] Progress: {i+1}/{total_waypoints} waypoints solved")
+
+        elapsed_s = time.time() - start_time
+        logger.info(f"[BatchIK] ✓ Success: Solved {total_waypoints} waypoints in {elapsed_s:.2f}s ({len(warnings)} warnings)")
+
+        return BatchIKResponse(
+            success=True,
+            joint_trajectory=joint_trajectory,
+            failed_at=None,
+            error=None,
+            warnings=warnings,
+            total_waypoints=total_waypoints,
+            planning_time_s=elapsed_s
+        )
+
+    except Exception as e:
+        elapsed_s = time.time() - start_time
+        logger.error(f"[BatchIK] Exception after {elapsed_s:.2f}s: {e}", exc_info=True)
+        return BatchIKResponse(
+            success=False,
+            joint_trajectory=None,
+            failed_at=None,
+            error=f"Batch IK error: {str(e)}",
+            warnings=[],
+            total_waypoints=len(request.waypoints),
+            planning_time_s=elapsed_s
+        )
+
+
+# IK Orientation Test Endpoint
+@app.post("/api/ik/test-orientations")
+async def test_ik_orientations(request: IKRequest):
+    """
+    Test IK with multiple orientation offsets to find the correct transformation.
+    Returns all variations and which ones succeed within joint limits.
+    """
+    import time
+    start_time = time.time()
+
+    try:
+        from spatialmath import SE3, UnitQuaternion
+        import numpy as np
+
+        # Extract base quaternion
+        if not request.target_quaternion:
+            return {"error": "This endpoint requires a quaternion input"}
+
+        qw, qx, qy, qz = request.target_quaternion
+        base_quat = UnitQuaternion([qw, qx, qy, qz])
+
+        # Test different Euler offset combinations (in degrees)
+        test_offsets = [
+            ("No offset", [0, 0, 0]),
+            ("Backend FK offset", [0, 90, -90]),
+            ("Inverted Y", [0, -90, 90]),
+            ("Inverted Z", [0, 90, 90]),
+            ("X=90", [90, 0, 0]),
+            ("X=-90", [-90, 0, 0]),
+            ("Y=90 only", [0, 90, 0]),
+            ("Y=-90 only", [0, -90, 0]),
+            ("Z=90 only", [0, 0, 90]),
+            ("Z=-90 only", [0, 0, -90]),
+            ("All 90", [90, 90, 90]),
+            ("X=90, Z=-90", [90, 0, -90]),
+        ]
+
+        results = []
+        x, y, z = request.target_pose[0] / 1000, request.target_pose[1] / 1000, request.target_pose[2] / 1000
+        current_q_rad = np.radians(request.current_joints)
+
+        for label, offset_deg in test_offsets:
+            # Create offset quaternion from Euler angles
+            offset_rad = np.radians(offset_deg)
+            offset_quat = UnitQuaternion.RPY(offset_rad, order='xyz')
+
+            # Apply offset: corrected = base * offset
+            corrected_quat = base_quat * offset_quat
+
+            # Create SE3 target
+            target_se3 = SE3.Trans(x, y, z) * corrected_quat.SE3()
+
+            # Solve IK
+            from smooth_motion import solve_ik_with_adaptive_tol_subdivision
+            ik_result = solve_ik_with_adaptive_tol_subdivision(
+                PAROL6_ROBOT.robot,
+                target_se3,
+                current_q_rad,
+                ilimit=100,
+                max_depth=2  # Faster for testing
+            )
+
+            result_joints_deg = np.degrees(ik_result.q) if ik_result.success and ik_result.q is not None else None
+            is_valid = ik_result.success and (ik_result.violations is None or len(ik_result.violations) == 0)
+
+            results.append({
+                "label": label,
+                "offset_euler": offset_deg,
+                "offset_quaternion": [offset_quat.s, offset_quat.v[0], offset_quat.v[1], offset_quat.v[2]],
+                "corrected_quaternion": [corrected_quat.s, corrected_quat.v[0], corrected_quat.v[1], corrected_quat.v[2]],
+                "success": ik_result.success,
+                "valid": is_valid,
+                "joints": result_joints_deg.tolist() if result_joints_deg is not None else None,
+                "iterations": ik_result.iterations,
+                "residual": float(ik_result.residual) if ik_result.residual is not None else None,
+                "violations": ik_result.violations if ik_result.violations else None,
+            })
+
+        elapsed_ms = (time.time() - start_time) * 1000
+
+        # Count valid solutions
+        valid_count = sum(1 for r in results if r["valid"])
+        logger.info(f"[IK Test] Tested {len(test_offsets)} orientations in {elapsed_ms:.1f}ms, {valid_count} valid solutions")
+
+        return {
+            "success": True,
+            "tested_count": len(test_offsets),
+            "valid_count": valid_count,
+            "results": results,
+            "elapsed_ms": elapsed_ms
+        }
+
+    except Exception as e:
+        logger.error(f"[IK Test] Exception: {e}", exc_info=True)
+        return {"success": False, "error": str(e)}
+
+
+# FK Solver Endpoint
+@app.post("/api/fk", response_model=FKResponse)
+async def solve_forward_kinematics(request: FKRequest):
+    """
+    Compute forward kinematics for given joint angles
+
+    Returns the TCP (Tool Center Point) pose that corresponds to the given
+    joint configuration. Uses the same robot model as the IK solver and
+    actual robot controller.
+
+    **Use cases:**
+    - Verify what pose the backend thinks a joint configuration produces
+    - Debug coordinate system mismatches between frontend and backend
+    - Validate robot workspace boundaries
+    """
+    import time
+    start_time = time.time()
+
+    try:
+        # Log raw request at DEBUG level
+        logger.debug(f"[FK] Raw request: {request.dict()}")
+
+        # Convert input joints from degrees to radians
+        joints_deg = request.joints
+        joints_rad = np.radians(joints_deg)
+
+        # High-level request summary at INFO level
+        logger.info(f"[FK] Request: Joints=[{', '.join([f'{j:.1f}°' for j in joints_deg])}]")
+        logger.debug(f"[FK] Joints (rad): {joints_rad}")
+
+        # Compute FK using robot model
+        fk_result = PAROL6_ROBOT.robot.fkine(joints_rad)
+
+        # Extract position (meters to millimeters)
+        position_m = fk_result.t
+        position_mm = position_m * 1000
+
+        # Extract orientation as Euler angles (xyz order, degrees) - DEFAULT
+        orientation_deg = fk_result.rpy(order='xyz', unit='deg')
+
+        # Extract orientation as quaternion [w, x, y, z]
+        from spatialmath import UnitQuaternion
+        quat = UnitQuaternion(fk_result.R)
+        quaternion = [quat.s, quat.v[0], quat.v[1], quat.v[2]]  # [w, x, y, z]
+
+        # Create pose array [x, y, z, rx, ry, rz] in mm and degrees
+        pose = [
+            position_mm[0],
+            position_mm[1],
+            position_mm[2],
+            orientation_deg[0],
+            orientation_deg[1],
+            orientation_deg[2]
+        ]
+
+        # Calculate elapsed time
+        elapsed_ms = (time.time() - start_time) * 1000
+
+        # Log result at INFO level
+        logger.info(f"[FK] ✓ Success in {elapsed_ms:.1f}ms: pose=[{pose[0]:.1f}, {pose[1]:.1f}, {pose[2]:.1f}, {pose[3]:.1f}°, {pose[4]:.1f}°, {pose[5]:.1f}°]")
+        logger.debug(f"[FK] Position (m): {position_m}")
+        logger.debug(f"[FK] Orientation (deg): RX={orientation_deg[0]:.2f}, RY={orientation_deg[1]:.2f}, RZ={orientation_deg[2]:.2f}")
+        logger.debug(f"[FK] Quaternion [w,x,y,z]: [{quaternion[0]:.4f}, {quaternion[1]:.4f}, {quaternion[2]:.4f}, {quaternion[3]:.4f}]")
+        logger.debug(f"[FK] Rotation matrix:\n{fk_result.R}")
+
+        # ============================================================
+        # GENERATE FK VARIATIONS
+        # ============================================================
+        from models import FKVariation
+        variations = []
+
+        # Helper function to create variation
+        def add_variation(label, pos, orient, quat, euler_order, coord_transform=None):
+            variations.append(FKVariation(
+                label=label,
+                pose=[pos[0], pos[1], pos[2], orient[0], orient[1], orient[2]],
+                quaternion=[quat.s, quat.v[0], quat.v[1], quat.v[2]],
+                euler_order=euler_order,
+                coord_transform=coord_transform
+            ))
+
+        # 1. All Euler angle orders (no coordinate transform)
+        # Note: spatialmath only supports certain orders (zyx, xyz, yxz, zxy, etc.)
+        # Try different orders and skip invalid ones
+        euler_orders = ['xyz', 'zyx', 'yxz', 'zxy', 'xzy', 'yzx']
+        for order in euler_orders:
+            try:
+                orient = fk_result.rpy(order=order, unit='deg')
+                add_variation(
+                    label=f"Euler {order.upper()}",
+                    pos=position_mm,
+                    orient=orient,
+                    quat=quat,
+                    euler_order=order
+                )
+            except ValueError as e:
+                # Skip invalid Euler order
+                logger.debug(f"[FK] Skipping invalid Euler order '{order}': {e}")
+
+        # 2. Coordinate transformations (with XYZ Euler order)
+        # These are common robotics coordinate frame conversions
+
+        # Z-up to Y-up (Robot -> Three.js): X=X, Y=Z, Z=-Y
+        pos_y_up = np.array([position_mm[0], position_mm[2], -position_mm[1]])
+        add_variation(
+            label="Y-up (Robot→Three.js)",
+            pos=pos_y_up,
+            orient=orientation_deg,  # Keep orientation same (rotations stay with axes)
+            quat=quat,
+            euler_order='xyz',
+            coord_transform='Z-up→Y-up: X=X, Y=Z, Z=-Y'
+        )
+
+        # Y-up to Z-up (Three.js -> Robot): X=X, Y=-Z, Z=Y
+        pos_z_up = np.array([position_mm[0], -position_mm[2], position_mm[1]])
+        add_variation(
+            label="Z-up (Three.js→Robot)",
+            pos=pos_z_up,
+            orient=orientation_deg,
+            quat=quat,
+            euler_order='xyz',
+            coord_transform='Y-up→Z-up: X=X, Y=-Z, Z=Y'
+        )
+
+        # Axis swaps without sign changes
+        add_variation(
+            label="Swap Y↔Z",
+            pos=np.array([position_mm[0], position_mm[2], position_mm[1]]),
+            orient=orientation_deg,
+            quat=quat,
+            euler_order='xyz',
+            coord_transform='X=X, Y=Z, Z=Y'
+        )
+
+        # Sign flips on individual axes
+        for axis_idx, axis_name in enumerate(['X', 'Y', 'Z']):
+            flipped_pos = position_mm.copy()
+            flipped_pos[axis_idx] = -flipped_pos[axis_idx]
+            add_variation(
+                label=f"Flip {axis_name}",
+                pos=flipped_pos,
+                orient=orientation_deg,
+                quat=quat,
+                euler_order='xyz',
+                coord_transform=f'Negate {axis_name} axis'
+            )
+
+        # Common combinations
+        add_variation(
+            label="Flip Y+Z",
+            pos=np.array([position_mm[0], -position_mm[1], -position_mm[2]]),
+            orient=orientation_deg,
+            quat=quat,
+            euler_order='xyz',
+            coord_transform='Negate Y and Z'
+        )
+
+        # Y-up with Y,Z swap and flip
+        pos_variant = np.array([position_mm[0], position_mm[2], position_mm[1]])
+        add_variation(
+            label="Y-up Alt (Y=Z, Z=Y)",
+            pos=pos_variant,
+            orient=orientation_deg,
+            quat=quat,
+            euler_order='xyz',
+            coord_transform='Swap Y↔Z (no negation)'
+        )
+
+        logger.info(f"[FK] Generated {len(variations)} variations")
+
+        # Build response
+        response = FKResponse(
+            success=True,
+            pose=pose,
+            quaternion=quaternion,
+            variations=variations,
+            error=None
+        )
+
+        logger.debug(f"[FK] Response: {response.dict()}")
+        return response
+
+    except Exception as e:
+        elapsed_ms = (time.time() - start_time) * 1000
+        logger.error(f"[FK] ✗ Exception in {elapsed_ms:.1f}ms: {e}", exc_info=True)
+        return FKResponse(
+            success=False,
+            pose=None,
+            quaternion=None,
+            error=f"FK calculation error: {str(e)}"
+        )
+
+
+# Movement Endpoints
+@app.post("/api/robot/move/joints", response_model=CommandResponse)
+async def move_joints(request: MoveJointsRequest):
+    """Move robot joints to specified angles"""
+    return execute_robot_command(
+        robot_client.move_robot_joints,
+        request.angles,
+        duration=request.duration,
+        speed_percentage=request.speed_percentage,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+@app.post("/api/robot/move/pose", response_model=CommandResponse)
+async def move_pose(request: MovePoseRequest):
+    """
+    Move robot to specified pose (joint-interpolated motion)
+    
+    **Motion Type**: Joint-interpolated (not guaranteed straight line)
+    
+    **How it works**: All joints move simultaneously to reach the target pose. 
+    The path taken is optimized for joint movement, which may result in a curved 
+    path for the end-effector.
+    
+    **Use cases**:
+    - Pick-and-place operations
+    - Moving between positions where path doesn't matter
+    - Generally faster than Cartesian motion
+    
+    **Example path**: Current ～～～> Target (curved path)
+    """
+    return execute_robot_command(
+        robot_client.move_robot_pose,
+        request.pose,
+        duration=request.duration,
+        speed_percentage=request.speed_percentage,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+@app.post("/api/robot/move/cartesian", response_model=CommandResponse)
+async def move_cartesian(request: MoveCartesianRequest):
+    """
+    Move robot in cartesian space (straight-line motion)
+    
+    **Motion Type**: Cartesian-interpolated (guaranteed straight line)
+    
+    **How it works**: The end-effector follows a straight line path from the 
+    current position to the target pose. Joint speeds are coordinated to maintain 
+    the linear trajectory.
+    
+    **Use cases**:
+    - Welding or painting along a line
+    - Insertion tasks requiring precise approach
+    - Drawing or writing applications
+    - Any task where the path taken matters
+    
+    **Example path**: Current -------> Target (straight line)
+    
+    **Note**: May be slower than Move Pose as joints must coordinate to maintain 
+    the straight line trajectory.
+    """
+    return execute_robot_command(
+        robot_client.move_robot_cartesian,
+        request.pose,
+        duration=request.duration,
+        speed_percentage=request.speed_percentage,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+@app.post("/api/robot/execute/trajectory", response_model=CommandResponse)
+async def execute_trajectory_endpoint(request: ExecuteTrajectoryRequest):
+    """
+    Execute a pre-computed joint trajectory at 100Hz.
+
+    **Motion Type**: Pre-computed joint-space trajectory
+
+    **How it works**:
+    1. Frontend generates Cartesian waypoints dynamically
+    2. Backend batch IK solves all waypoints ONCE (offline planning)
+    3. This endpoint executes the joint trajectory at 100Hz
+
+    **Advantages**:
+    - Achieves 100Hz execution (same as MoveJoint)
+    - Cartesian straight-line motion in task space
+    - No real-time IK overhead (all IK done offline)
+
+    **Use cases**:
+    - Cartesian straight-line motion with guaranteed 100Hz performance
+    - Complex multi-point trajectories
+    - Motion where both path and speed matter
+
+    **Workflow**:
+    ```
+    1. Generate Cartesian waypoints → /api/ik/batch → Get joint trajectory
+    2. Execute joint trajectory → /api/robot/execute/trajectory
+    ```
+
+    **Example**: Drawing a straight line at constant speed in 3D space
+    """
+    return execute_robot_command(
+        robot_client.execute_trajectory,
+        request.trajectory,
+        duration=request.duration,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+# Jog Endpoints
+@app.post("/api/robot/jog/joint", response_model=CommandResponse)
+async def jog_joint(request: JogJointRequest):
+    """Jog a single robot joint"""
+    return execute_robot_command(
+        robot_client.jog_robot_joint,
+        request.joint_index,
+        request.speed_percentage,
+        duration=request.duration,
+        distance_deg=request.distance_deg,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+@app.post("/api/robot/jog/cartesian", response_model=CommandResponse)
+async def jog_cartesian(request: JogCartesianRequest):
+    """Jog robot in cartesian space"""
+    return execute_robot_command(
+        robot_client.jog_cartesian,
+        request.frame,
+        request.axis,
+        request.speed_percentage,
+        request.duration,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+# Gripper Endpoints
+@app.post("/api/robot/gripper/electric", response_model=CommandResponse)
+async def control_electric_gripper(request: ElectricGripperRequest):
+    """Control electric gripper"""
+    return execute_robot_command(
+        robot_client.control_electric_gripper,
+        request.action,
+        position=request.position,
+        speed=request.speed,
+        current=request.current,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+@app.post("/api/robot/gripper/pneumatic", response_model=CommandResponse)
+async def control_pneumatic_gripper(request: PneumaticGripperRequest):
+    """Control pneumatic gripper"""
+    return execute_robot_command(
+        robot_client.control_pneumatic_gripper,
+        request.action,
+        request.port,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+# Control Endpoints
+@app.post("/api/robot/home", response_model=CommandResponse)
+async def home_robot():
+    """Home the robot"""
+    return execute_robot_command(
+        robot_client.home_robot,
+        wait_for_ack=True,
+        timeout=30.0
+    )
+
+
+@app.post("/api/robot/stop", response_model=CommandResponse)
+async def stop_robot():
+    """Emergency stop robot movement"""
+    return execute_robot_command(
+        robot_client.stop_robot_movement,
+        wait_for_ack=True,
+        timeout=2.0
+    )
+
+
+@app.post("/api/robot/clear-estop", response_model=CommandResponse)
+async def clear_estop():
+    """Clear software E-stop flag to re-enable robot motion"""
+    return execute_robot_command(
+        robot_client.clear_estop,
+        wait_for_ack=True,
+        timeout=2.0
+    )
+
+
+@app.post("/api/robot/delay", response_model=CommandResponse)
+async def delay_robot(request: DelayRequest):
+    """Add delay to robot execution"""
+    return execute_robot_command(
+        robot_client.delay_robot,
+        request.duration,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+# Smooth Motion Endpoints
+@app.post("/api/robot/motion/circle", response_model=CommandResponse)
+async def smooth_circle(request: SmoothCircleRequest):
+    """Execute smooth circular motion"""
+    return execute_robot_command(
+        robot_client.smooth_circle,
+        request.center,
+        request.radius,
+        plane=request.plane,
+        frame=request.frame,
+        start_pose=request.start_pose,
+        duration=request.duration,
+        speed_percentage=request.speed_percentage,
+        clockwise=request.clockwise,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+@app.post("/api/robot/motion/arc", response_model=CommandResponse)
+async def smooth_arc(request: SmoothArcRequest):
+    """Execute smooth arc motion"""
+    return execute_robot_command(
+        robot_client.smooth_arc_center,
+        request.end_pose,
+        request.center,
+        frame=request.frame,
+        start_pose=request.start_pose,
+        duration=request.duration,
+        speed_percentage=request.speed_percentage,
+        clockwise=request.clockwise,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+@app.post("/api/robot/motion/spline", response_model=CommandResponse)
+async def smooth_spline(request: SmoothSplineRequest):
+    """Execute smooth spline motion"""
+    return execute_robot_command(
+        robot_client.smooth_spline,
+        request.waypoints,
+        frame=request.frame,
+        start_pose=request.start_pose,
+        duration=request.duration,
+        speed_percentage=request.speed_percentage,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+@app.post("/api/robot/motion/helix", response_model=CommandResponse)
+async def smooth_helix(request: SmoothHelixRequest):
+    """Execute smooth helical motion"""
+    return execute_robot_command(
+        robot_client.smooth_helix,
+        request.center,
+        request.radius,
+        request.pitch,
+        request.height,
+        frame=request.frame,
+        start_pose=request.start_pose,
+        duration=request.duration,
+        speed_percentage=request.speed_percentage,
+        clockwise=request.clockwise,
+        wait_for_ack=request.wait_for_ack,
+        timeout=request.timeout
+    )
+
+
+# Command Status Endpoint
+@app.get("/api/robot/command/{command_id}", response_model=CommandAcknowledgment)
+async def get_command_status(command_id: str):
+    """Get status of a tracked command"""
+    status = robot_client.check_command_status(command_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Command not found or tracking not active")
+    
+    return CommandAcknowledgment(
+        command_id=command_id,
+        status=status.get('status', 'UNKNOWN'),
+        details=status.get('details'),
+        completed=status.get('completed', False),
+        ack_time=status.get('ack_time')
+    )
+
+
+# ============================================================================
+# WebSocket Endpoint
+# ============================================================================
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time robot data"""
+    client_id = str(uuid.uuid4())
+
+    try:
+        # Connect client
+        await manager.connect(websocket, client_id)
+
+        # Send welcome message
+        await manager.send_json_to_client({
+            "type": "connected",
+            "client_id": client_id,
+            "message": "Connected to PAROL6 Robot WebSocket",
+            "timestamp": datetime.now().isoformat()
+        }, client_id)
+
+        # Send historical logs if configured
+        initial_log_count = config.get('logging', {}).get('initial_log_count', 100)
+        if initial_log_count > 0:
+            historical_logs = websocket_handler.get_logs(limit=initial_log_count)
+            for log_entry in historical_logs:
+                await manager.send_json_to_client({
+                    "type": "log",
+                    "data": log_entry
+                }, client_id)
+            logger.debug(f"Sent {len(historical_logs)} historical log entries to client {client_id}")
+
+        # Handle messages
+        while True:
+            # Receive message from client
+            message = await websocket.receive_text()
+            await manager.handle_client_message(client_id, message)
+            
+    except WebSocketDisconnect:
+        manager.disconnect(client_id)
+        logger.info(f"WebSocket client {client_id} disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error for client {client_id}: {e}")
+        manager.disconnect(client_id)
+
+
+@app.get("/api/websocket/clients")
+async def get_websocket_clients():
+    """Get information about connected WebSocket clients"""
+    return {
+        "count": manager.get_connection_count(),
+        "clients": manager.get_client_info()
+    }
+
+
+# Configuration Endpoints
+@app.get("/api/config")
+async def get_config():
+    """Get current configuration"""
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Configuration file not found")
+
+
+@app.patch("/api/config")
+async def update_config(updates: Dict[str, Any]):
+    """Update configuration (partial update supported)"""
+    try:
+        # Load current config
+        with open(CONFIG_PATH, "r") as f:
+            current_config = yaml.safe_load(f)
+
+        # Deep merge updates
+        def deep_merge(base, updates):
+            for key, value in updates.items():
+                if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                    deep_merge(base[key], value)
+                else:
+                    base[key] = value
+
+        deep_merge(current_config, updates)
+
+        # Save updated config
+        with open(CONFIG_PATH, "w") as f:
+            yaml.dump(current_config, f, default_flow_style=False)
+        
+        return {"message": "Configuration updated successfully", "config": current_config}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update configuration: {str(e)}")
+
+
+@app.get("/api/config/com-ports")
+async def get_available_com_ports():
+    """Get list of available COM ports (Windows only)"""
+    try:
+        import serial.tools.list_ports
+        ports = serial.tools.list_ports.comports()
+        return {
+            "ports": [
+                {
+                    "device": port.device,
+                    "description": port.description,
+                    "hwid": port.hwid
+                }
+                for port in ports
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list COM ports: {str(e)}")
+
+
+# URDF Configuration Endpoints
+@app.post("/api/urdf/update-gripper")
+async def update_urdf_gripper(
+    mesh_filename: str,
+    mesh_offset_position: Dict[str, float],  # {x, y, z} in meters
+    mesh_offset_rotation: Dict[str, float],  # {rx, ry, rz} in degrees
+    tcp_offset_position: Dict[str, float],   # {x, y, z} in mm
+    tcp_offset_rotation: Dict[str, float],   # {rx, ry, rz} in degrees
+    stl_data: Optional[str] = None  # Base64 encoded STL file data (optional)
+):
+    """
+    Update URDF with custom gripper configuration.
+    Modifies L6 link visual origin and saves TCP offset to config.yaml
+
+    Args:
+        mesh_filename: Name of the STL file (e.g., "custom_gripper.STL")
+        mesh_offset_position: Position offset {x, y, z} in meters
+        mesh_offset_rotation: Rotation offset {rx, ry, rz} in degrees
+        tcp_offset_position: TCP position offset {x, y, z} in mm
+        tcp_offset_rotation: TCP orientation offset {rx, ry, rz} in degrees
+        stl_data: Optional base64 encoded STL file data to save
+    """
+    try:
+        urdf_path = PROJECT_ROOT / "frontend" / "public" / "urdf" / "PAROL6.urdf"
+        meshes_dir = PROJECT_ROOT / "frontend" / "public" / "urdf" / "meshes"
+
+        if not urdf_path.exists():
+            raise HTTPException(status_code=404, detail="URDF file not found")
+
+        # Parse URDF XML
+        tree = ET.parse(urdf_path)
+        root = tree.getroot()
+
+        # Find L6 link
+        l6_link = None
+        for link in root.findall(".//link[@name='L6']"):
+            l6_link = link
+            break
+
+        if l6_link is None:
+            raise HTTPException(status_code=404, detail="L6 link not found in URDF")
+
+        # Find or create visual element
+        visual = l6_link.find("visual")
+        if visual is None:
+            visual = ET.SubElement(l6_link, "visual")
+
+        # Update visual origin
+        origin = visual.find("origin")
+        if origin is None:
+            origin = ET.SubElement(visual, "origin")
+
+        # Convert rotation from degrees to radians for rpy attribute
+        import math
+        rx_rad = mesh_offset_rotation['rx'] * math.pi / 180
+        ry_rad = mesh_offset_rotation['ry'] * math.pi / 180
+        rz_rad = mesh_offset_rotation['rz'] * math.pi / 180
+
+        # Set xyz and rpy attributes
+        origin.set("xyz", f"{mesh_offset_position['x']} {mesh_offset_position['y']} {mesh_offset_position['z']}")
+        origin.set("rpy", f"{rx_rad} {ry_rad} {rz_rad}")
+
+        # Update mesh filename
+        geometry = visual.find("geometry")
+        if geometry is None:
+            geometry = ET.SubElement(visual, "geometry")
+
+        mesh = geometry.find("mesh")
+        if mesh is None:
+            mesh = ET.SubElement(geometry, "mesh")
+
+        mesh.set("filename", f"./meshes/{mesh_filename}")
+
+        # Save STL file if provided
+        if stl_data:
+            meshes_dir.mkdir(parents=True, exist_ok=True)
+            stl_path = meshes_dir / mesh_filename
+
+            # Decode base64 and save
+            stl_bytes = base64.b64decode(stl_data)
+            with open(stl_path, "wb") as f:
+                f.write(stl_bytes)
+
+            logger.info(f"Saved STL file to {stl_path}")
+
+        # Save updated URDF
+        tree.write(urdf_path, encoding="utf-8", xml_declaration=True)
+        logger.info(f"Updated URDF at {urdf_path}")
+
+        # Update config.yaml with TCP offset
+        try:
+            with open(CONFIG_PATH, "r") as f:
+                current_config = yaml.safe_load(f)
+
+            # Update tcp_offset in ui section
+            # Note: TCP offset is now managed per-tool, not globally
+            # The URDF update no longer syncs to a global tcp_offset config
+            logger.info(f"URDF updated (TCP offset managed per-tool)")
+
+        except Exception as e:
+            logger.warning(f"Failed to update config.yaml: {e}")
+            # Don't fail the whole request if config update fails
+
+        return {
+            "message": "URDF and configuration updated successfully",
+            "urdf_path": str(urdf_path),
+            "mesh_path": f"./meshes/{mesh_filename}",
+            "tcp_offset": {
+                "position": tcp_offset_position,
+                "rotation": tcp_offset_rotation
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update URDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update URDF: {str(e)}")
+
+
+# Tool Management CRUD Endpoints
+@app.get("/api/config/tools")
+async def get_tools():
+    """Get all tools in the tool library"""
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        tools = config.get('ui', {}).get('tools', [])
+        active_id = config.get('ui', {}).get('active_tool', None)
+
+        return {
+            "tools": tools,
+            "active_tool_id": active_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load tools: {str(e)}")
+
+
+@app.get("/api/config/tools/{tool_id}")
+async def get_tool(tool_id: str):
+    """Get single tool by ID"""
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        tools = config.get('ui', {}).get('tools', [])
+        tool = next((t for t in tools if t['id'] == tool_id), None)
+
+        if not tool:
+            raise HTTPException(status_code=404, detail=f"Tool '{tool_id}' not found")
+
+        return tool
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load tool: {str(e)}")
+
+
+@app.post("/api/config/tools")
+async def create_tool(request: CreateToolRequest):
+    """Create new tool"""
+    try:
+        # Generate tool ID from name (slugify)
+        import re
+        tool_id = re.sub(r'[^a-z0-9]+', '_', request.name.lower()).strip('_')
+
+        # Ensure ID is unique
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        if 'ui' not in config:
+            config['ui'] = {}
+        if 'tools' not in config['ui']:
+            config['ui']['tools'] = []
+
+        tools = config['ui']['tools']
+
+        # Check for duplicate ID
+        if any(t['id'] == tool_id for t in tools):
+            # Append number to make unique
+            counter = 1
+            while any(t['id'] == f"{tool_id}_{counter}" for t in tools):
+                counter += 1
+            tool_id = f"{tool_id}_{counter}"
+
+        # Create new tool
+        new_tool = {
+            "id": tool_id,
+            "name": request.name,
+            "description": request.description,
+            "mesh_file": request.mesh_file,
+            "mesh_units": request.mesh_units if request.mesh_units else "mm",
+            "mesh_offset": {
+                "x": request.mesh_offset_position.x,
+                "y": request.mesh_offset_position.y,
+                "z": request.mesh_offset_position.z,
+                "rx": request.mesh_offset_rotation.rx,
+                "ry": request.mesh_offset_rotation.ry,
+                "rz": request.mesh_offset_rotation.rz
+            },
+            "tcp_offset": {
+                "x": request.tcp_offset_position.x,
+                "y": request.tcp_offset_position.y,
+                "z": request.tcp_offset_position.z,
+                "rx": request.tcp_offset_rotation.rx,
+                "ry": request.tcp_offset_rotation.ry,
+                "rz": request.tcp_offset_rotation.rz
+            }
+        }
+
+        # Save STL file if provided
+        if request.stl_data and request.mesh_file:
+            meshes_dir = PROJECT_ROOT / "frontend" / "public" / "urdf" / "meshes"
+            meshes_dir.mkdir(parents=True, exist_ok=True)
+            stl_path = meshes_dir / request.mesh_file
+
+            # Decode base64 and save
+            stl_bytes = base64.b64decode(request.stl_data)
+            with open(stl_path, "wb") as f:
+                f.write(stl_bytes)
+
+            logger.info(f"Saved STL file to {stl_path}")
+
+        # Add to tools list
+        tools.append(new_tool)
+
+        # Save config
+        with open(CONFIG_PATH, "w") as f:
+            yaml.dump(config, f, default_flow_style=False)
+
+        logger.info(f"Created tool: {tool_id}")
+
+        return {
+            "message": "Tool created successfully",
+            "tool": new_tool
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to create tool: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create tool: {str(e)}")
+
+
+@app.patch("/api/config/tools/{tool_id}")
+async def update_tool(tool_id: str, request: UpdateToolRequest):
+    """Update existing tool"""
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        tools = config.get('ui', {}).get('tools', [])
+        tool_index = next((i for i, t in enumerate(tools) if t['id'] == tool_id), None)
+
+        if tool_index is None:
+            raise HTTPException(status_code=404, detail=f"Tool '{tool_id}' not found")
+
+        tool = tools[tool_index]
+
+        # Update fields if provided
+        if request.name is not None:
+            tool['name'] = request.name
+        if request.description is not None:
+            tool['description'] = request.description
+        if request.mesh_file is not None:
+            tool['mesh_file'] = request.mesh_file
+        if request.mesh_units is not None:
+            tool['mesh_units'] = request.mesh_units
+
+        if request.mesh_offset_position is not None:
+            tool['mesh_offset']['x'] = request.mesh_offset_position.x
+            tool['mesh_offset']['y'] = request.mesh_offset_position.y
+            tool['mesh_offset']['z'] = request.mesh_offset_position.z
+
+        if request.mesh_offset_rotation is not None:
+            tool['mesh_offset']['rx'] = request.mesh_offset_rotation.rx
+            tool['mesh_offset']['ry'] = request.mesh_offset_rotation.ry
+            tool['mesh_offset']['rz'] = request.mesh_offset_rotation.rz
+
+        if request.tcp_offset_position is not None:
+            tool['tcp_offset']['x'] = request.tcp_offset_position.x
+            tool['tcp_offset']['y'] = request.tcp_offset_position.y
+            tool['tcp_offset']['z'] = request.tcp_offset_position.z
+
+        if request.tcp_offset_rotation is not None:
+            tool['tcp_offset']['rx'] = request.tcp_offset_rotation.rx
+            tool['tcp_offset']['ry'] = request.tcp_offset_rotation.ry
+            tool['tcp_offset']['rz'] = request.tcp_offset_rotation.rz
+
+        # Save STL file if provided
+        if request.stl_data and request.mesh_file:
+            meshes_dir = PROJECT_ROOT / "frontend" / "public" / "urdf" / "meshes"
+            meshes_dir.mkdir(parents=True, exist_ok=True)
+            stl_path = meshes_dir / request.mesh_file
+
+            # Decode base64 and save
+            stl_bytes = base64.b64decode(request.stl_data)
+            with open(stl_path, "wb") as f:
+                f.write(stl_bytes)
+
+            logger.info(f"Saved STL file to {stl_path}")
+
+        # If this is the active tool, sync tcp_offset
+        if config.get('ui', {}).get('active_tool') == tool_id:
+            config['ui']['tcp_offset'] = tool['tcp_offset']
+            logger.info(f"Synced tcp_offset from mounted tool {tool_id}")
+
+        # Save config
+        with open(CONFIG_PATH, "w") as f:
+            yaml.dump(config, f, default_flow_style=False)
+
+        logger.info(f"Updated tool: {tool_id}")
+
+        return {
+            "message": "Tool updated successfully",
+            "tool": tool
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update tool: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update tool: {str(e)}")
+
+
+@app.delete("/api/config/tools/{tool_id}")
+async def delete_tool(tool_id: str):
+    """Delete tool (cannot delete mounted tool)"""
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        active_id = config.get('ui', {}).get('active_tool')
+
+        # Prevent deleting mounted tool
+        if active_id == tool_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot remove mounted tool. Mount a different tool first."
+            )
+
+        tools = config.get('ui', {}).get('tools', [])
+        tool_index = next((i for i, t in enumerate(tools) if t['id'] == tool_id), None)
+
+        if tool_index is None:
+            raise HTTPException(status_code=404, detail=f"Tool '{tool_id}' not found")
+
+        # Remove tool
+        deleted_tool = tools.pop(tool_index)
+
+        # Save config
+        with open(CONFIG_PATH, "w") as f:
+            yaml.dump(config, f, default_flow_style=False)
+
+        logger.info(f"Removed tool from library: {tool_id}")
+
+        return {
+            "message": f"Tool '{deleted_tool['name']}' removed from library"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete tool: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete tool: {str(e)}")
+
+
+@app.post("/api/config/tools/{tool_id}/mount")
+async def mount_tool(tool_id: str):
+    """Mount tool and sync tcp_offset"""
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        tools = config.get('ui', {}).get('tools', [])
+        tool = next((t for t in tools if t['id'] == tool_id), None)
+
+        if not tool:
+            raise HTTPException(status_code=404, detail=f"Tool '{tool_id}' not found")
+
+        # Update active tool ID
+        config['ui']['active_tool'] = tool_id
+
+        # Note: TCP offset is now read from active tool, not synced to global config
+
+        # Save config
+        with open(CONFIG_PATH, "w") as f:
+            yaml.dump(config, f, default_flow_style=False)
+
+        logger.info(f"Mounted tool: {tool_id}")
+
+        return {
+            "message": f"Tool '{tool['name']}' mounted successfully",
+            "tool": tool,
+            "tcp_offset": tool['tcp_offset']
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to mount tool: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to mount tool: {str(e)}")
+
+
+# Logging Endpoints
+@app.get("/api/logs")
+async def get_logs(
+    level: Optional[str] = Query(None, description="Filter by log level"),
+    source: Optional[str] = Query(None, description="Filter by source/module"),
+    limit: Optional[int] = Query(100, description="Maximum number of logs", ge=1, le=10000)
+):
+    """Get recent logs from the buffer"""
+    logs = websocket_handler.get_logs(level=level, source=source, limit=limit)
+    return {
+        "logs": logs,
+        "count": len(logs),
+        "filters": {
+            "level": level,
+            "source": source,
+            "limit": limit
+        }
+    }
+
+
+@app.delete("/api/logs")
+async def clear_logs():
+    """Clear the log buffer"""
+    websocket_handler.clear_logs()
+    logger.info("Log buffer cleared")
+    return {"message": "Log buffer cleared successfully"}
+
+
+@app.get("/api/logs/export")
+async def export_logs(
+    format: Literal["json", "text"] = Query("json", description="Export format")
+):
+    """Export logs as downloadable file"""
+    from fastapi.responses import Response
+
+    try:
+        content = websocket_handler.export_logs(format=format)
+
+        if format == "json":
+            return Response(
+                content=content,
+                media_type="application/json",
+                headers={"Content-Disposition": f"attachment; filename=robot_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"}
+            )
+        else:
+            return Response(
+                content=content,
+                media_type="text/plain",
+                headers={"Content-Disposition": f"attachment; filename=robot_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"}
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to export logs: {str(e)}")
+
+
+# ============================================================================
+# Camera Endpoints
+# ============================================================================
+
+@app.get("/api/camera/devices")
+async def get_camera_devices():
+    """Get list of available USB camera devices"""
+    try:
+        camera_manager = get_camera_manager()
+        devices = await asyncio.to_thread(camera_manager.detect_cameras)
+        return {
+            "devices": devices,
+            "count": len(devices)
+        }
+    except Exception as e:
+        logger.error(f"Error detecting cameras: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to detect cameras: {str(e)}")
+
+
+@app.get("/api/camera/status")
+async def get_camera_status():
+    """Get current camera status"""
+    try:
+        camera_manager = get_camera_manager()
+        status = camera_manager.get_status()
+        return status
+    except Exception as e:
+        logger.error(f"Error getting camera status: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get camera status: {str(e)}")
+
+
+@app.post("/api/camera/start")
+async def start_camera(device: str, width: Optional[int] = None, height: Optional[int] = None, fps: Optional[int] = None):
+    """
+    Start camera on specified device
+
+    Args:
+        device: Device path (e.g., /dev/video0)
+        width: Optional frame width (default from config)
+        height: Optional frame height (default from config)
+        fps: Optional frames per second (default from config)
+    """
+    try:
+        camera_manager = get_camera_manager()
+        success = await asyncio.to_thread(
+            camera_manager.start_camera,
+            device,
+            width,
+            height,
+            fps
+        )
+
+        if success:
+            status = camera_manager.get_status()
+            return {
+                "success": True,
+                "message": f"Camera started on {device}",
+                "status": status
+            }
+        else:
+            raise HTTPException(status_code=500, detail=f"Failed to start camera on {device}")
+
+    except Exception as e:
+        logger.error(f"Error starting camera: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to start camera: {str(e)}")
+
+
+@app.post("/api/camera/stop")
+async def stop_camera():
+    """Stop camera capture"""
+    try:
+        camera_manager = get_camera_manager()
+        await asyncio.to_thread(camera_manager.stop_camera)
+        return {
+            "success": True,
+            "message": "Camera stopped"
+        }
+    except Exception as e:
+        logger.error(f"Error stopping camera: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to stop camera: {str(e)}")
+
+
+async def generate_mjpeg_stream():
+    """Generator function for MJPEG stream"""
+    camera_manager = get_camera_manager()
+
+    while True:
+        try:
+            # Get MJPEG frame from camera manager
+            frame = await asyncio.to_thread(camera_manager.get_mjpeg_frame)
+
+            if frame:
+                yield frame
+            else:
+                # Camera not streaming, wait a bit
+                await asyncio.sleep(0.1)
+
+        except Exception as e:
+            logger.error(f"Error generating MJPEG frame: {e}")
+            await asyncio.sleep(0.1)
+
+
+@app.get("/api/camera/stream")
+async def camera_stream():
+    """
+    MJPEG video stream endpoint
+
+    Returns a continuous multipart MJPEG stream that can be displayed in an img tag:
+    <img src="http://localhost:3001/api/camera/stream" />
+    """
+    return StreamingResponse(
+        generate_mjpeg_stream(),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+
+# ============================================================================
+# Performance Recording Endpoints
+# ============================================================================
+
+@app.post("/api/performance/recording/enable", response_model=CommandResponse)
+async def enable_performance_recording():
+    """
+    Enable automatic performance recording
+
+    When enabled, each move command completion is automatically saved
+    as a separate JSON file in the /recordings/ directory.
+    """
+    return execute_robot_command(
+        robot_client.set_performance_recording,
+        enabled=True,
+        wait_for_ack=True,
+        timeout=5.0
+    )
+
+
+@app.post("/api/performance/recording/disable", response_model=CommandResponse)
+async def disable_performance_recording():
+    """
+    Disable automatic performance recording
+
+    Stops auto-saving command performance data.
+    """
+    return execute_robot_command(
+        robot_client.set_performance_recording,
+        enabled=False,
+        wait_for_ack=True,
+        timeout=5.0
+    )
+
+
+@app.get("/api/performance/recordings", response_model=list[RecordingListItem])
+async def list_performance_recordings():
+    """
+    List all available performance recordings
+
+    Returns a list of all recording files with summary information including
+    filename, timestamp, number of commands, and total duration.
+    """
+    try:
+        recordings_dir = PROJECT_ROOT / "recordings"
+
+        # Create directory if it doesn't exist
+        recordings_dir.mkdir(exist_ok=True)
+
+        # Find all JSON files
+        recording_files = sorted(recordings_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+
+        recordings = []
+        for filepath in recording_files:
+            try:
+                # Read recording metadata
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+
+                # Calculate total duration
+                total_duration = sum(cmd.get('duration_s', 0) for cmd in data.get('commands', []))
+
+                recordings.append(RecordingListItem(
+                    filename=filepath.name,
+                    name=data.get('metadata', {}).get('name', filepath.stem),
+                    timestamp=data.get('metadata', {}).get('timestamp', ''),
+                    num_commands=len(data.get('commands', [])),
+                    total_duration_s=total_duration
+                ))
+            except Exception as e:
+                logger.warning(f"Failed to read recording file {filepath.name}: {e}")
+                continue
+
+        return recordings
+
+    except Exception as e:
+        logger.error(f"Error listing recordings: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to list recordings: {str(e)}")
+
+
+@app.get("/api/performance/recordings/{filename}", response_model=PerformanceRecording)
+async def get_performance_recording(filename: str):
+    """
+    Get a specific performance recording
+
+    Returns the complete recording data including metadata and all command
+    performance samples for visualization and analysis.
+    """
+    try:
+        recordings_dir = PROJECT_ROOT / "recordings"
+        filepath = recordings_dir / filename
+
+        # Security: Ensure the path is within recordings directory
+        if not filepath.resolve().is_relative_to(recordings_dir.resolve()):
+            raise HTTPException(status_code=400, detail="Invalid filename")
+
+        # Check if file exists
+        if not filepath.exists():
+            raise HTTPException(status_code=404, detail="Recording not found")
+
+        # Read and return recording data
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+
+        return PerformanceRecording(**data)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reading recording {filename}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to read recording: {str(e)}")
+
+
+@app.delete("/api/performance/recordings/{filename}")
+async def delete_performance_recording(filename: str):
+    """
+    Delete a performance recording
+
+    Permanently deletes the specified recording file.
+    """
+    try:
+        recordings_dir = PROJECT_ROOT / "recordings"
+        filepath = recordings_dir / filename
+
+        # Security: Ensure the path is within recordings directory
+        if not filepath.resolve().is_relative_to(recordings_dir.resolve()):
+            raise HTTPException(status_code=400, detail="Invalid filename")
+
+        # Check if file exists
+        if not filepath.exists():
+            raise HTTPException(status_code=404, detail="Recording not found")
+
+        # Delete file
+        filepath.unlink()
+
+        logger.info(f"Deleted recording: {filename}")
+        return {
+            "success": True,
+            "message": f"Recording {filename} deleted successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting recording {filename}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete recording: {str(e)}")
+
+
+# ============================================================================
+# Main Entry Point
+# ============================================================================
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    # Get server config
+    api_config = config.get('api', {})
+    host = api_config.get('host', '0.0.0.0')
+    port = api_config.get('port', 8000)
+    
+    # Run server
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        log_level="info",
+        access_log=True
+    )

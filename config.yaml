@@ -1,0 +1,278 @@
+api:
+  cors_origins:
+  - http://localhost:3000
+  - http://localhost:3001
+  - http://192.168.1.253:3000
+  - http://parol6.local:3000
+  - http://10.0.0.1:3000
+  host: 0.0.0.0
+  port: 3001
+  ws_default_rate_hz: 10
+  ws_max_rate_hz: 50
+camera:
+  auto_start: false
+  default_device: /dev/video0
+  fps: 30
+  jpeg_quality: 80
+  resolution:
+    height: 480
+    width: 640
+frontend:
+  api_url: http://localhost:3001
+  websocket:
+    default_rate_hz: 50
+    hardware_data_timeout_ms: 3000
+    reconnect:
+      base_delay_ms: 1000
+      max_attempts: 10
+    topics:
+    - status
+    - joints
+    - pose
+    - io
+    - gripper
+logging:
+  api:
+    level: INFO
+  buffer_size: 1000
+  commander:
+    level: INFO
+  file_output: null
+  initial_log_count: 100
+  level: INFO
+  log_forward_enabled: true
+  log_forward_host: 127.0.0.1
+  log_forward_port: 5003
+  stream_to_websocket: true
+robot:
+  auto_home_on_startup: false
+  baud_rate: 3000000
+  com_port: /dev/ttyACM0
+  estop_enabled: true
+  timeout: 0
+server:
+  ack_port: 5002
+  command_port: 5001
+  log_forward_enabled: true
+  log_forward_port: 5003
+  loop_interval: 0.01
+ui:
+  active_tool: standard_90deg_tool
+  cartesian_position_step_mm: 1
+  commander_robot:
+    color: '#ffffff'
+    transparency: 1
+  default_acceleration_percentage: 90
+  default_fps: 60
+  default_speed_percentage: 50
+  default_timeline_duration: 10
+  hardware_robot:
+    color: '#9096f4'
+    transparency: 0.3
+  saved_positions:
+  - joints:
+    - 90
+    - -90
+    - 180
+    - 0
+    - 0
+    - 180
+    name: Home
+  - joints:
+    - 0
+    - -90
+    - 180
+    - 0
+    - 0
+    - 90
+    name: Ready
+  - joints:
+    - 90
+    - -145.0088
+    - 107.866
+    - 0
+    - 0
+    - 180
+    name: Shutdown pose
+  - joints:
+    - 90
+    - -90
+    - 180
+    - 0
+    - 0
+    - 180
+    name: FK_Test_Standby
+  - joints:
+    - 0
+    - -90
+    - 180
+    - 0
+    - 0
+    - 180
+    name: FK_Test_J1
+  - joints:
+    - 90
+    - -60
+    - 180
+    - 0
+    - 0
+    - 180
+    name: FK_Test_J2
+  - joints:
+    - 90
+    - -90
+    - 150
+    - 0
+    - 0
+    - 180
+    name: FK_Test_J3
+  - joints:
+    - 90
+    - -90
+    - 180
+    - 45
+    - 0
+    - 180
+    name: FK_Test_J4
+  - joints:
+    - 90
+    - -90
+    - 180
+    - 0
+    - 45
+    - 180
+    name: FK_Test_J5
+  - joints:
+    - 90
+    - -90
+    - 180
+    - 0
+    - 0
+    - 90
+    name: FK_Test_J6
+  - joints:
+    - 45
+    - -80
+    - 160
+    - 30
+    - 30
+    - 120
+    name: FK_Test_Multi
+  show_safety_warnings: false
+  step_angle: 1
+  tcp_offset: &id001
+    rx: 90
+    ry: 180
+    rz: 90
+    x: 0
+    y: 0
+    z: -34
+  tools:
+  - description: No tool attached - TCP at J6 flange tip
+    id: default_j6_tip
+    mesh_file: null
+    mesh_offset:
+      rx: 0
+      ry: 0
+      rz: 0
+      x: 0
+      y: 0
+      z: 0
+    mesh_units: mm
+    name: Default (J6 Tip)
+    tcp_offset:
+      rx: 90
+      ry: 180
+      rz: 0
+      x: 0
+      y: 0
+      z: -34
+  - description: ''
+    id: standard_90deg_tool
+    mesh_file: L6.STL
+    mesh_offset:
+      rx: 0
+      ry: 0
+      rz: 0
+      x: 0
+      y: 0
+      z: 0
+    mesh_units: m
+    name: Standard 90deg tool
+    tcp_offset:
+      rx: 90
+      ry: 180
+      rz: 0
+      x: 0
+      y: -42
+      z: -62.8
+  - description: ''
+    id: custom_flange
+    mesh_file: Pneumatic_gripper_holder_horizontal.stl
+    mesh_offset:
+      rx: 0
+      ry: 180
+      rz: 0
+      x: 0.036
+      y: 0
+      z: 0
+    mesh_units: mm
+    name: Custom flange
+    tcp_offset:
+      rx: 90
+      ry: 180
+      rz: 0
+      x: 0
+      y: 0
+      z: -56
+  - description: ''
+    id: default_no_offset
+    mesh_file: null
+    mesh_offset:
+      rx: 0
+      ry: 0
+      rz: 0
+      x: 0
+      y: 0
+      z: 0
+    mesh_units: mm
+    name: Default no offset
+    tcp_offset:
+      rx: 0
+      ry: 0
+      rz: 0
+      x: 0
+      y: 0
+      z: 0
+  - description: ''
+    id: rotation_only
+    mesh_file: null
+    mesh_offset:
+      rx: 0
+      ry: 0
+      rz: 0
+      x: 0
+      y: 0
+      z: 0
+    mesh_units: mm
+    name: Rotation only
+    tcp_offset:
+      rx: 90
+      ry: 180
+      rz: 0
+      x: 0
+      y: 0
+      z: 0
+  - description: ''
+    id: at_flange_no_rotation
+    mesh_file: null
+    mesh_offset:
+      rx: 0
+      ry: 0
+      rz: 0
+      x: 0
+      y: 0
+      z: 0
+    mesh_units: mm
+    name: At flange
+    tcp_offset: *id001
