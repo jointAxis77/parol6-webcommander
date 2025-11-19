@@ -1,0 +1,185 @@
+<?xml version="1.0"?>
+<!--
+PAROL6_DH.urdf - DH-aligned URDF for PAROL6 robot
+Generated to match DHRobot kinematics exactly.
+
+This URDF uses Modified DH convention joint frames to ensure FK/IK
+results match the backend DHRobot model in robot_model.py.
+
+DH Parameters:
+  Joint 1: d=0.11050, a=0.02342, alpha=-π/2, offset=0
+  Joint 2: d=0.00000, a=0.18000, alpha=π,    offset=0
+  Joint 3: d=0.00000, a=-0.04350, alpha=π/2,  offset=0
+  Joint 4: d=-0.17635, a=0.00000, alpha=-π/2, offset=0
+  Joint 5: d=0.00000, a=0.00000, alpha=π/2,  offset=0
+  Joint 6: d=-0.03400, a=0.00000, alpha=π,    offset=π/2
+
+TCP: J6 flange (34mm from J5/J6 intersection)
+-->
+<robot name="PAROL6_DH">
+
+  <!-- World link (reference frame) -->
+  <link name="world"/>
+
+  <!-- Base link (robot mounting point) -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.11" radius="0.05"/>
+      </geometry>
+      <origin xyz="0 0 0.055" rpy="0 0 0"/>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Fixed joint: world to base_link -->
+  <joint name="base_joint" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+  <!-- Link 1 (J1 rotation) -->
+  <link name="link1">
+    <visual>
+      <geometry>
+        <cylinder length="0.05" radius="0.04"/>
+      </geometry>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <material name="red">
+        <color rgba="0.8 0.2 0.2 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Joint 1: base_link to link1 -->
+  <joint name="joint1" type="revolute">
+    <parent link="base_link"/>
+    <child link="link1"/>
+    <origin xyz="0.0 0.0 0.1105" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.14761" upper="2.14761" effort="100" velocity="2.0"/>
+  </joint>
+
+  <!-- Link 2 (J2 rotation) -->
+  <link name="link2">
+    <visual>
+      <geometry>
+        <box size="0.18 0.04 0.04"/>
+      </geometry>
+      <origin xyz="0.09 0 0" rpy="0 0 0"/>
+      <material name="green">
+        <color rgba="0.2 0.8 0.2 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Joint 2: link1 to link2 -->
+  <joint name="joint2" type="revolute">
+    <parent link="link1"/>
+    <child link="link2"/>
+    <origin xyz="0.02342 0.0 0.0" rpy="0.0 0.0 -1.5708"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.53073" upper="-0.05890" effort="100" velocity="2.0"/>
+  </joint>
+
+  <!-- Link 3 (J3 rotation) -->
+  <link name="link3">
+    <visual>
+      <geometry>
+        <cylinder length="0.08" radius="0.03"/>
+      </geometry>
+      <origin xyz="0 0 0.04" rpy="0 0 0"/>
+      <material name="blue">
+        <color rgba="0.2 0.2 0.8 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Joint 3: link2 to link3 -->
+  <joint name="joint3" type="revolute">
+    <parent link="link2"/>
+    <child link="link3"/>
+    <origin xyz="0.18 0.0 0.0" rpy="0.0 0.0 3.14159"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="1.88270" upper="5.02486" effort="100" velocity="2.0"/>
+  </joint>
+
+  <!-- Link 4 (J4 rotation) -->
+  <link name="link4">
+    <visual>
+      <geometry>
+        <cylinder length="0.17" radius="0.025"/>
+      </geometry>
+      <origin xyz="0 0 -0.085" rpy="0 0 0"/>
+      <material name="yellow">
+        <color rgba="0.8 0.8 0.2 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Joint 4: link3 to link4 -->
+  <joint name="joint4" type="revolute">
+    <parent link="link3"/>
+    <child link="link4"/>
+    <origin xyz="-0.0435 0.17635 0.0" rpy="0.0 0.0 1.5708"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-1.84041" upper="1.84041" effort="100" velocity="2.0"/>
+  </joint>
+
+  <!-- Link 5 (J5 rotation) -->
+  <link name="link5">
+    <visual>
+      <geometry>
+        <cylinder length="0.04" radius="0.02"/>
+      </geometry>
+      <origin xyz="0 0 0.02" rpy="0 0 0"/>
+      <material name="magenta">
+        <color rgba="0.8 0.2 0.8 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Joint 5: link4 to link5 -->
+  <joint name="joint5" type="revolute">
+    <parent link="link4"/>
+    <child link="link5"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 -1.5708"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-1.57080" upper="1.57080" effort="100" velocity="2.0"/>
+  </joint>
+
+  <!-- Link 6 (J6 rotation / TCP flange) -->
+  <link name="link6">
+    <visual>
+      <geometry>
+        <cylinder length="0.034" radius="0.025"/>
+      </geometry>
+      <origin xyz="0 0.017 0" rpy="0 0 0"/>
+      <material name="cyan">
+        <color rgba="0.2 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Joint 6: link5 to link6 -->
+  <joint name="joint6" type="revolute">
+    <parent link="link5"/>
+    <child link="link6"/>
+    <origin xyz="0.0 0.034 0.0" rpy="0.0 0.0 1.5708"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="0.0" upper="6.28319" effort="100" velocity="2.0"/>
+  </joint>
+
+  <!-- TCP (Tool Center Point) - at J6 flange -->
+  <link name="tcp"/>
+
+  <joint name="tcp_joint" type="fixed">
+    <parent link="link6"/>
+    <child link="tcp"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+</robot>
