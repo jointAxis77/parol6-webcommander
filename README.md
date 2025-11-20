@@ -196,36 +196,6 @@ parol6/
 └── requirements.txt        # Python dependencies
 ```
 
-### Development Workflow
-
-1. **Frontend Development**
-   ```bash
-   cd frontend
-   npm run dev  # Hot reload on port 3000
-   ```
-
-2. **API Development**
-   ```bash
-   cd api
-   python3 fastapi_server.py  # Uvicorn auto-reload
-   ```
-
-3. **Testing Changes**
-   - Frontend changes: Automatic hot reload
-   - API changes: Automatic uvicorn reload
-   - Commander changes: Restart with `pm2 restart commander`
-
-### Building for Production
-
-```bash
-# Build frontend
-cd frontend
-npm run build
-
-# Start production build
-npm start
-```
-
 ## API Documentation
 
 Full API documentation available at `http://localhost:3001/redoc`
@@ -307,6 +277,7 @@ Connect to `ws://localhost:3001/ws` and subscribe to topics:
 **Based on:**
 - [PAROL6 Desktop Robot Arm](https://github.com/PCrnjak/PAROL6-Desktop-robot-arm) by PCrnjak - Robot hardware design
 - [PAROL6 Python API](https://github.com/PCrnjak/PAROL6-python-API) by PCrnjak - Commander architecture and serial protocol
+- [PAROL6 Python API](https://github.com/Jepson2k/PAROL6-python-API/) by Jepson2k - Extended functionality and improvements
 
 **Built with:**
 - [FastAPI](https://fastapi.tiangolo.com/) - API framework
