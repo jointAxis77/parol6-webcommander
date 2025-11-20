@@ -8,6 +8,8 @@ import json
 import asyncio
 from datetime import datetime
 import logging
+import yaml
+from pathlib import Path
 from lib.models.api_models import WebSocketMessage, WebSocketError, RobotStatus
 
 logger = logging.getLogger(__name__)
@@ -15,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class ConnectionManager:
     """Manages WebSocket connections and broadcasts robot state"""
-    
+
     def __init__(self):
         # Active connections mapped by client ID
         self.active_connections: Dict[str, WebSocket] = {}
@@ -27,6 +29,29 @@ class ConnectionManager:
         self.last_update: Dict[str, datetime] = {}
         # Log level filters per client
         self.log_filters: Dict[str, str] = {}  # client_id -> min log level
+
+        # Load frontend log level from config
+        self.frontend_log_level = self._load_frontend_log_level()
+
+    def _load_frontend_log_level(self) -> int:
+        """Load frontend log level from config.yaml"""
+        try:
+            config_path = Path(__file__).parent.parent / "config.yaml"
+            with open(config_path, "r") as f:
+                config = yaml.safe_load(f)
+
+            level_str = config.get('logging', {}).get('frontend', {}).get('level', 'DEBUG')
+            level_map = {
+                'DEBUG': logging.DEBUG,
+                'INFO': logging.INFO,
+                'WARNING': logging.WARNING,
+                'ERROR': logging.ERROR,
+                'CRITICAL': logging.CRITICAL
+            }
+            return level_map.get(level_str.upper(), logging.DEBUG)
+        except Exception as e:
+            logger.warning(f"Failed to load frontend log level from config: {e}, using DEBUG")
+            return logging.DEBUG
         
     async def connect(self, websocket: WebSocket, client_id: str):
         """Accept new WebSocket connection"""
@@ -267,9 +292,11 @@ class ConnectionManager:
                 else:
                     full_message = message
 
-                # Inject frontend log into backend logging system with [Frontend] prefix
+                # Inject frontend log into backend logging system
                 log_level = level_map.get(level, logging.INFO)
                 frontend_logger = logging.getLogger(f"frontend.{source}")
+                # Apply configured frontend log level
+                frontend_logger.setLevel(self.frontend_log_level)
                 frontend_logger.log(log_level, full_message)
 
         except json.JSONDecodeError:

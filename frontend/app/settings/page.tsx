@@ -681,6 +681,31 @@ export default function SettingsPage() {
                 </Select>
               </div>
 
+              {/* Frontend Log Level */}
+              <div className="grid grid-cols-3 items-start gap-4">
+                <Label>Frontend Log Level</Label>
+                <div className="col-span-2 space-y-2">
+                  <Select
+                    value={localConfig.logging.frontend?.level || 'DEBUG'}
+                    onValueChange={(value) => updateConfig(['logging', 'frontend', 'level'], value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DEBUG">DEBUG</SelectItem>
+                      <SelectItem value="INFO">INFO</SelectItem>
+                      <SelectItem value="WARNING">WARNING</SelectItem>
+                      <SelectItem value="ERROR">ERROR</SelectItem>
+                      <SelectItem value="CRITICAL">CRITICAL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Reload frontend page after saving to apply changes
+                  </p>
+                </div>
+              </div>
+
               {/* Buffer Size */}
               <div className="grid grid-cols-3 items-center gap-4">
                 <Label>Buffer Size</Label>

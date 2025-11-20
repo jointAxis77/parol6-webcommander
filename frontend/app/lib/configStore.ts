@@ -31,6 +31,15 @@ interface LoggingConfig {
   stream_to_websocket: boolean;
   file_output: string | null;
   initial_log_count: number;
+  commander?: {
+    level: string;
+  };
+  api?: {
+    level: string;
+  };
+  frontend?: {
+    level: string;
+  };
 }
 
 interface TCPOffset {

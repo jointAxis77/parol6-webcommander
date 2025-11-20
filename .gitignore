@@ -53,17 +53,8 @@ test_results/
 tests/
 backups/
 
-# Kinematics development files (not for production)
-lib/kinematics/debug_*.py
-lib/kinematics/test_*.py
-lib/kinematics/visualize_*.py
-lib/kinematics/plot_*.py
-lib/kinematics/calculate_*.py
-lib/kinematics/verify_*.py
-lib/kinematics/extract_*.py
-lib/kinematics/compute_*.py
-lib/kinematics/*.png
-lib/kinematics/*.jpg
+# Kinematics (unused - IK is done in frontend)
+lib/kinematics/
 
 # Deprecated code
 **/deprecated/

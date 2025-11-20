@@ -8,7 +8,7 @@ A modern, web-based control system for the PAROL6 6-axis robotic arm featuring r
 - **Dual Control Modes** - Joint space and Cartesian space motion control
 - **Timeline Editor** - Visual programming with keyframe-based motion sequences
 - **Live Control** - Real-time hardware following with trajectory preview
-- **Advanced Kinematics** - Backend IK solver with adaptive tolerance and singularity handling
+- **Advanced Kinematics** - Frontend IK solver with numerical stability and singularity handling
 - **Tool Management** - Configurable end-effectors with TCP offset and gripper support
 - **WebSocket Streaming** - High-frequency robot status updates (1-50Hz)
 - **Camera Integration** - Optional camera feed with MJPEG streaming
@@ -36,7 +36,6 @@ The system consists of three processes managed by PM2:
 **API Server** (FastAPI)
 - RESTful HTTP endpoints
 - WebSocket server for robot telemetry
-- Backend IK solver using Robotics Toolbox
 - Camera streaming (MJPEG)
 
 **Commander** (Python)
