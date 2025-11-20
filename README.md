@@ -17,8 +17,7 @@ A modern, web-based control system for the PAROL6 6-axis robotic arm featuring r
 
 ## Architecture
 
-The system consists of three processes managed by PM2:
-
+### System Overview
 ```mermaid
 graph LR
     A[Frontend<br/>Next.js<br/>Port 3000] <-->|HTTP/WebSocket| B[API Server<br/>FastAPI<br/>Port 3001]
@@ -26,23 +25,75 @@ graph LR
     C <-->|Serial USB| D[Robot<br/>Hardware]
 ```
 
-**Frontend** (Next.js 14)
-- React 18 with TypeScript
-- Three.js/React Three Fiber for 3D visualization
-- Zustand for state management
-- WebSocket client for real-time updates
-- Inverse kinematics solver
+### Detailed Architecture
+```mermaid
+graph TB
+    subgraph Frontend["Frontend (Browser)"]
+        UI[UI Components<br/>3D Viewer, Controls, Timeline]
+        IK[IK Solver<br/>Numerical Jacobian]
+        Store[State Management<br/>5 Zustand Stores]
+        WS[WebSocket Client<br/>Real-time Status]
+        API[API Client<br/>HTTP Requests]
 
-**API Server** (FastAPI)
-- RESTful HTTP endpoints
-- WebSocket server for robot telemetry
-- Camera streaming (MJPEG)
+        UI --> Store
+        Store --> IK
+        Store --> API
+        Store --> WS
+    end
 
-**Commander** (Python)
-- Robot control loop (100Hz)
-- Serial communication with hardware
-- UDP command protocol
-- Motion execution
+    subgraph APIServer["API Server (FastAPI)"]
+        HTTP[HTTP Endpoints<br/>REST API]
+        WSServer[WebSocket Server<br/>Broadcast Status]
+        Camera[Camera Manager<br/>MJPEG Stream]
+        UDPClient[UDP Client<br/>Send Commands]
+        Logger[Log Aggregator<br/>UDP Receiver]
+
+        HTTP --> UDPClient
+        WSServer --> Logger
+    end
+
+    subgraph Commander["Commander (Python)"]
+        UDPServer[UDP Server<br/>Receive Commands]
+        Queue[Command Queue<br/>FIFO Processing]
+        Serial[Serial Protocol<br/>USB Communication]
+        State[Robot State<br/>Position, Speed, I/O]
+        Motion[Motion Executor<br/>Trajectory Interpolation]
+
+        UDPServer --> Queue
+        Queue --> Motion
+        Motion --> Serial
+        Serial --> State
+        State --> UDPServer
+    end
+
+    subgraph Hardware["Robot Hardware"]
+        Controller[Microcontroller<br/>Motor Control]
+        Motors[Servo Motors<br/>6-Axis]
+        Sensors[Sensors<br/>Encoders, Limit Switches]
+        IO[Digital I/O<br/>Gripper, E-stop]
+    end
+
+    API --> HTTP
+    WS --> WSServer
+    UDPClient -.->|Commands| UDPServer
+    UDPServer -.->|ACK + Status| UDPClient
+    Logger -.->|Logs| WSServer
+    Serial <-->|Serial| Controller
+    Controller --> Motors
+    Controller --> Sensors
+    Controller --> IO
+
+    style Frontend fill:#e1f5ff
+    style APIServer fill:#fff4e1
+    style Commander fill:#f0e1ff
+    style Hardware fill:#ffe1e1
+```
+
+**Key Data Flows:**
+- **User Control:** UI → State → API → Commander → Robot
+- **Live Feedback:** Robot → Commander → WebSocket → Frontend UI
+- **IK Solving:** Target Pose → IK Solver → Joint Angles → Commander
+- **Logging:** Commander → UDP → API → WebSocket → Browser Console
 
 ## Hardware Requirements
 
