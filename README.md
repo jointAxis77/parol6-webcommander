@@ -228,16 +228,41 @@ npm start
 
 ## API Documentation
 
-### REST Endpoints
 Full API documentation available at `http://localhost:3001/redoc`
 
-Key endpoints:
-- `GET /api/robot/status` - Complete robot state
-- `POST /api/robot/move/joint` - Joint space motion
-- `POST /api/robot/move/pose` - Cartesian motion with IK
-- `POST /api/robot/move/cartesian` - Linear Cartesian motion
-- `GET /api/config` - System configuration
-- `POST /api/config/tools` - Tool management
+### Key Endpoints
+
+**Robot Control:**
+- `POST /api/robot/move/joints` - Move robot to target joint angles
+- `POST /api/robot/execute/trajectory` - Execute multi-waypoint trajectory
+- `POST /api/robot/home` - Home the robot
+- `POST /api/robot/stop` - Stop current motion
+- `POST /api/robot/clear-estop` - Clear emergency stop
+
+**Gripper Control:**
+- `POST /api/robot/gripper/electric` - Control electric gripper
+- `POST /api/robot/gripper/pneumatic` - Control pneumatic gripper
+
+**Tool Management:**
+- `GET /api/config/tools` - List all tools
+- `POST /api/config/tools` - Create new tool
+- `PATCH /api/config/tools/{tool_id}` - Update tool
+- `DELETE /api/config/tools/{tool_id}` - Delete tool
+- `POST /api/config/tools/{tool_id}/mount` - Mount tool as active
+
+**Configuration:**
+- `GET /api/config` - Get system configuration
+- `PATCH /api/config` - Update configuration
+
+**Camera:**
+- `GET /api/camera/status` - Camera status
+- `POST /api/camera/start` - Start camera stream
+- `POST /api/camera/stop` - Stop camera stream
+- `GET /api/camera/stream` - MJPEG camera stream
+
+**Logs:**
+- `GET /api/logs` - Get system logs
+- `DELETE /api/logs` - Clear logs
 
 ### WebSocket Topics
 Connect to `ws://localhost:3001/ws` and subscribe to topics:
