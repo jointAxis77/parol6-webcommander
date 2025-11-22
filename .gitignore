@@ -56,12 +56,15 @@ backups/
 # Deprecated code
 **/deprecated/
 
+# Documentation (except README)
+*.md
+!README.md
+
 # Temporary files
 *_old.*
 *.backup
 *.bak
 *_backup.*
-NEW_URDF_TEST_README.md
 
 # Build artifacts
 frontend/tsconfig.tsbuildinfo
