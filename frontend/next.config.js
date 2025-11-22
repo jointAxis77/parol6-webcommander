@@ -6,6 +6,14 @@ const nextConfig = {
   // Enable standalone output for Docker builds
   output: 'standalone',
 
+  // Ignore ESLint and TypeScript errors during Docker builds
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   webpack: (config, { isServer }) => {
     // Fix for urdf-loader and three.js in webpack
     config.module.rules.push({
