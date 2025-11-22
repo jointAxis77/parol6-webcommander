@@ -12,7 +12,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push:
@@ -28,6 +27,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set lowercase image name
+        id: image_name
+        run: echo "value=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -46,7 +49,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          images: ${{ env.REGISTRY }}/${{ steps.image_name.outputs.value }}/${{ matrix.service }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -65,8 +68,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image_name.outputs.value }}/frontend:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image_name.outputs.value }}/frontend:buildcache,mode=max
 
       - name: Build and push API image
         if: matrix.service == 'api'
@@ -78,8 +81,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image_name.outputs.value }}/api:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image_name.outputs.value }}/api:buildcache,mode=max
 
       - name: Build and push Commander image
         if: matrix.service == 'commander'
@@ -91,5 +94,5 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/commander:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/commander:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image_name.outputs.value }}/commander:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image_name.outputs.value }}/commander:buildcache,mode=max
