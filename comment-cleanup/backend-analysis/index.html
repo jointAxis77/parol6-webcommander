@@ -1,0 +1,1924 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Web-based control system for the PAROL6 robot arm">
+      
+      
+      
+        <link rel="canonical" href="https://jointaxis77.github.io/parol6-webcommander/comment-cleanup/backend-analysis/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>PAROL6 Backend Analysis - Comment Cleanup - Pilot</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#parol6-backend-analysis-comment-cleanup" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Pilot" class="md-header__button md-logo" aria-label="Pilot" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Pilot
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              PAROL6 Backend Analysis - Comment Cleanup
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jointAxis77/parol6-webcommander" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jointAxis77/parol6-webcommander
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Pilot" class="md-nav__button md-logo" aria-label="Pilot" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Pilot
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jointAxis77/parol6-webcommander" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jointAxis77/parol6-webcommander
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/interface-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interface Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/timeline-programming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Timeline Programming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/tool-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-module-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API MODULE ANALYSIS
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API MODULE ANALYSIS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#location-homejacobparol6api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Location: /home/jacob/parol6/api/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-fastapi_serverpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. fastapi_server.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-robot_clientpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. robot_client.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-modelspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. models.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-websocket_managerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. websocket_manager.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-camera_managerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. camera_manager.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-utilslogging_handlerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. utils/logging_handler.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-utilsnumpy_patchpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. utils/numpy_patch.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-utilsinitpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. utils/init.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commander-module-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        COMMANDER MODULE ANALYSIS
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="COMMANDER MODULE ANALYSIS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#location-homejacobparol6commander" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Location: /home/jacob/parol6/commander/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-inventory_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-commanderpy-highest-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. commander.py (HIGHEST PRIORITY)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-serial_protocolpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. serial_protocol.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-command_parserpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. command_parser.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-command_queuepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. command_queue.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-network_handlerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. network_handler.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-robot_statepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. robot_state.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-performance_monitorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. performance_monitor.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-commandspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. commands.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-constantspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. constants.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-validationpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. validation.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-logging_conventionspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. logging_conventions.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commander-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commander Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lib-module-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LIB MODULE ANALYSIS
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LIB MODULE ANALYSIS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#location-homejacobparol6lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Location: /home/jacob/parol6/lib/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-inventory_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-kinematicsik_solverpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. kinematics/ik_solver.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-kinematicsrobot_modelpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. kinematics/robot_model.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-kinematicstrajectory_mathpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. kinematics/trajectory_math.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-kinematicsinitpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. kinematics/init.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-initpy-root-lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. init.py (root lib)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lib-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lib Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consolidated-cleanup-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CONSOLIDATED CLEANUP TABLE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CONSOLIDATED CLEANUP TABLE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#by-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        By Priority
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="By Priority">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#critical-must-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CRITICAL (Must Fix)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-priority-should-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HIGH PRIORITY (Should Fix)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#medium-priority-nice-to-have" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MEDIUM PRIORITY (Nice to Have)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-quality-observations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Quality Observations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Quality Observations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strengths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strengths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#weaknesses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Weaknesses
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary Statistics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Summary Statistics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#by-file-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        By File Type
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup-effort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cleanup Effort
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="parol6-backend-analysis-comment-cleanup">PAROL6 Backend Analysis - Comment Cleanup<a class="headerlink" href="#parol6-backend-analysis-comment-cleanup" title="Permanent link">&para;</a></h1>
+<p><strong>Directories:</strong> API, Commander, Lib<br />
+<strong>File Count:</strong> 24 files<br />
+<strong>Total LOC:</strong> ~13,138 lines<br />
+<strong>Language:</strong> Python<br />
+<strong>Status:</strong> GOOD - Well-documented, minor cleanup needed</p>
+<h2 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>project-root/
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── api/                          (8 files, 4,862 LOC)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   ├── fastapi_server.py
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   ├── robot_client.py
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   ├── models.py
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   ├── websocket_manager.py
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── camera_manager.py
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   └── utils/
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│       ├── logging_handler.py
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│       ├── numpy_patch.py
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│       └── __init__.py
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>├── commander/                    (11 files, 6,777 LOC)
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   ├── commander.py
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│   ├── serial_protocol.py
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   ├── command_parser.py
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   ├── command_queue.py
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   ├── network_handler.py
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   ├── robot_state.py
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│   ├── performance_monitor.py
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│   ├── commands.py
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│   ├── constants.py
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│   ├── validation.py
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│   └── logging_conventions.py
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>└── lib/                          (5 files, 1,499 LOC)
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    └── kinematics/
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>        ├── ik_solver.py
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>        ├── robot_model.py
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>        ├── trajectory_math.py
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>        └── __init__.py
+</code></pre></div>
+<hr />
+<h2 id="api-module-analysis">API MODULE ANALYSIS<a class="headerlink" href="#api-module-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="location-homejacobparol6api">Location: <code>/home/jacob/parol6/api/</code><a class="headerlink" href="#location-homejacobparol6api" title="Permanent link">&para;</a></h3>
+<p><strong>File Count:</strong> 8<br />
+<strong>Total LOC:</strong> 4,862<br />
+<strong>Status:</strong> GOOD</p>
+<h3 id="file-inventory">File Inventory<a class="headerlink" href="#file-inventory" title="Permanent link">&para;</a></h3>
+<h4 id="1-fastapi_serverpy">1. fastapi_server.py<a class="headerlink" href="#1-fastapi_serverpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~1200<br />
+<strong>Status:</strong> GOOD - Minor issue found</p>
+<p><strong>Strengths:</strong>
+- Clear module docstring: "FastAPI server for PAROL6 Robot - HTTP/WebSocket bridge"
+- Well-commented configuration loading
+- Clear comments on numpy patch (legacy fix)</p>
+<p><strong>Issues Found:</strong>
+- Line ~80: Incomplete comment
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># UDP Log Receiver Task</span>
+</code></pre></div>
+  - Should either be completed or removed
+  - Unclear if functionality is implemented</p>
+<p><strong>Recommendation:</strong> Review and clarify around line 80</p>
+<h4 id="2-robot_clientpy">2. robot_client.py<a class="headerlink" href="#2-robot_clientpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~300<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- UDP client for communicating with commander
+- Comments on old implementations (documented)
+- Clear connection handling</p>
+<h4 id="3-modelspy">3. models.py<a class="headerlink" href="#3-modelspy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~400<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Pydantic models for API
+- Well-documented model definitions
+- Contains references to "old" configurations (acceptable)</p>
+<h4 id="4-websocket_managerpy">4. websocket_manager.py<a class="headerlink" href="#4-websocket_managerpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~200<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- WebSocket connection management
+- Clear event handling
+- Well-structured</p>
+<h4 id="5-camera_managerpy">5. camera_manager.py<a class="headerlink" href="#5-camera_managerpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~200<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Camera feed management
+- Well-commented initialization</p>
+<h4 id="6-utilslogging_handlerpy">6. utils/logging_handler.py<a class="headerlink" href="#6-utilslogging_handlerpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~400<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Centralized logging setup
+- Comments on WebSocket integration
+- Clear configuration</p>
+<h4 id="7-utilsnumpy_patchpy">7. utils/numpy_patch.py<a class="headerlink" href="#7-utilsnumpy_patchpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~80<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Compatibility layer for numpy 2.0+
+- Well-documented (print statements justified for debugging)
+- Important compatibility fix</p>
+<h4 id="8-utilsinitpy">8. utils/<strong>init</strong>.py<a class="headerlink" href="#8-utilsinitpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~50<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Module initialization</p>
+<h3 id="api-summary">API Summary<a class="headerlink" href="#api-summary" title="Permanent link">&para;</a></h3>
+<p><strong>Grade: B+</strong></p>
+<p>Overall good quality. One incomplete comment needs clarification.</p>
+<p><strong>Cleanup Time:</strong> ~5 minutes</p>
+<p><strong>Action Items:</strong>
+1. Clarify or remove incomplete comment at line 80</p>
+<hr />
+<h2 id="commander-module-analysis">COMMANDER MODULE ANALYSIS<a class="headerlink" href="#commander-module-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="location-homejacobparol6commander">Location: <code>/home/jacob/parol6/commander/</code><a class="headerlink" href="#location-homejacobparol6commander" title="Permanent link">&para;</a></h3>
+<p><strong>File Count:</strong> 11<br />
+<strong>Total LOC:</strong> 6,777<br />
+<strong>Status:</strong> GOOD - Moderate cleanup needed</p>
+<h3 id="file-inventory_1">File Inventory<a class="headerlink" href="#file-inventory_1" title="Permanent link">&para;</a></h3>
+<h4 id="1-commanderpy-highest-priority">1. commander.py (HIGHEST PRIORITY)<a class="headerlink" href="#1-commanderpy-highest-priority" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~1200<br />
+<strong>Status:</strong> NEEDS CLEANUP</p>
+<p><strong>Issues Found:</strong></p>
+<ol>
+<li><strong>Outdated Module Docstring (Lines 1-9)</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="s1">&#39;&#39;&#39;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="s1">A full fledged &quot;API&quot; for the PAROL6 robot. To use this, you should pair it </span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="s1">with the &quot;robot_api.py&quot; where you can import commands from said file and </span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">use them anywhere within your code. This Python script will handle sending </span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">and performing all the commands to the PAROL6 robot, as well as E-Stop </span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">functionality and safety limitations.</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">To run this program, you must use the &quot;experimental-kinematics&quot; branch </span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">of the &quot;PAROL-commander-software&quot; on GitHub which can be found through </span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="s1">this link: ...</span>
+</code></pre></div></li>
+<li>References old GitHub branch structure</li>
+<li>Mentions files that no longer exist (robot_api.py)</li>
+<li>Hardcoded folder paths (\Project Files...)</li>
+<li>
+<p><strong>Action:</strong> UPDATE docstring to reflect current structure</p>
+</li>
+<li>
+<p><strong>Non-English Comments (Lines 527-528)</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># ako su dobri izračunaj crc</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># if crc dobar raspakiraj podatke</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># ako je dobar paket je dobar i spremi ga u nove variable!</span>
+</code></pre></div></p>
+</li>
+<li>Serbian/Croatian mixed with English</li>
+<li>Hard to maintain</li>
+<li>
+<p><strong>Action:</strong> TRANSLATE to English or REMOVE</p>
+</li>
+<li>
+<p><strong>Commented-out Code Block (Lines 531-533)</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">#print(&quot;podaci u data bufferu su:&quot;)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1">#for i in range(data_len):</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="c1">#print(data_buffer[i])</span>
+</code></pre></div></p>
+</li>
+<li>Old debug print loop</li>
+<li><strong>Action:</strong> REMOVE if not needed for debugging</li>
+</ol>
+<p><strong>Positive Aspects:</strong>
+- Otherwise well-commented
+- Clear logging statements
+- Good error handling documentation</p>
+<h4 id="2-serial_protocolpy">2. serial_protocol.py<a class="headerlink" href="#2-serial_protocolpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~400<br />
+<strong>Status:</strong> NEEDS CLEANUP</p>
+<p><strong>Issues Found:</strong></p>
+<ol>
+<li><strong>Commented-out Alternative Implementation (Line 551)</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">#return [var_in &gt;&gt; i &amp; 1 for i in range(7,-1,-1)]</span>
+</code></pre></div></li>
+<li>Old implementation left behind</li>
+<li>New version on line 552 is verified working</li>
+<li>
+<p><strong>Action:</strong> REMOVE</p>
+</li>
+<li>
+<p><strong>Otherwise Good</strong></p>
+</li>
+<li>Function definitions well-documented</li>
+<li>Docstrings explain purpose</li>
+</ol>
+<h4 id="3-command_parserpy">3. command_parser.py<a class="headerlink" href="#3-command_parserpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~300<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Command parsing logic well-structured
+- Comments on old/previous implementations (acceptable)
+- Clear handling of different command types</p>
+<h4 id="4-command_queuepy">4. command_queue.py<a class="headerlink" href="#4-command_queuepy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~250<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Queue management well-documented
+- Contains print() for debugging (appropriate)
+- Comments on previous implementations (acceptable)</p>
+<h4 id="5-network_handlerpy">5. network_handler.py<a class="headerlink" href="#5-network_handlerpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~300<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- UDP communication handler
+- Clear comments on old implementations
+- Print statements for debugging (appropriate)</p>
+<h4 id="6-robot_statepy">6. robot_state.py<a class="headerlink" href="#6-robot_statepy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~250<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- State management well-documented
+- Contains legacy references (acceptable)
+- Clear variable tracking</p>
+<h4 id="7-performance_monitorpy">7. performance_monitor.py<a class="headerlink" href="#7-performance_monitorpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~200<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Timing and metrics well-documented
+- Print statements for performance output (justified)
+- Clear timing calculations</p>
+<h4 id="8-commandspy">8. commands.py<a class="headerlink" href="#8-commandspy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~400<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Command definitions well-structured
+- Clear base class and subclasses
+- Good documentation</p>
+<h4 id="9-constantspy">9. constants.py<a class="headerlink" href="#9-constantspy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~200<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Configuration constants well-organized
+- Comments on old/previous values (acceptable)</p>
+<h4 id="10-validationpy">10. validation.py<a class="headerlink" href="#10-validationpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~150<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Input validation logic
+- Clear validation rules</p>
+<h4 id="11-logging_conventionspy">11. logging_conventions.py<a class="headerlink" href="#11-logging_conventionspy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~80<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Logging setup and conventions
+- Print statements for logging initialization (justified)</p>
+<h3 id="commander-summary">Commander Summary<a class="headerlink" href="#commander-summary" title="Permanent link">&para;</a></h3>
+<p><strong>Grade: B</strong></p>
+<p>Good overall structure with moderate cleanup needed. Three files need attention:
+- commander.py: Docstring + non-English comments + commented code (HIGH PRIORITY)
+- serial_protocol.py: Commented-out code (HIGH PRIORITY)</p>
+<p><strong>Cleanup Time:</strong> ~20-30 minutes</p>
+<p><strong>Action Items:</strong>
+1. Update commander.py docstring (5-10 min)
+2. Translate/remove non-English comments (5 min)
+3. Remove commented-out code blocks (5 min)
+4. Remove alternate implementation in serial_protocol.py (5 min)</p>
+<hr />
+<h2 id="lib-module-analysis">LIB MODULE ANALYSIS<a class="headerlink" href="#lib-module-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="location-homejacobparol6lib">Location: <code>/home/jacob/parol6/lib/</code><a class="headerlink" href="#location-homejacobparol6lib" title="Permanent link">&para;</a></h3>
+<p><strong>File Count:</strong> 5<br />
+<strong>Total LOC:</strong> 1,499<br />
+<strong>Status:</strong> EXCELLENT - Minor cleanup needed</p>
+<h3 id="file-inventory_2">File Inventory<a class="headerlink" href="#file-inventory_2" title="Permanent link">&para;</a></h3>
+<h4 id="1-kinematicsik_solverpy">1. kinematics/ik_solver.py<a class="headerlink" href="#1-kinematicsik_solverpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~400<br />
+<strong>Status:</strong> EXCELLENT</p>
+<p><strong>Strengths:</strong>
+- Professional docstring header:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="sd">Inverse Kinematics Solver for PAROL6 Robot</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="sd">This module provides centralized IK solving functionality with:</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="sd">- Adaptive tolerance based on manipulability</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="sd">- Recursive subdivision for difficult targets</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="sd">- Angle unwrapping for continuous motion</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="sd">- Joint limit checking</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="sd">- Configuration-dependent reach calculations</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="sd">Author: Extracted from headless_commander.py</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="sd">Date: 2025-01-12</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="sd">&quot;&quot;&quot;</span>
+</code></pre></div>
+- Clear author/date attribution
+- Well-documented functions with parameters
+- Example: <code>unwrap_angles()</code> (lines 61-79)
+  - Clear docstring explaining algorithm
+  - Parameter/return documentation</p>
+<p><strong>Recommendation:</strong> KEEP AS-IS</p>
+<h4 id="2-kinematicsrobot_modelpy">2. kinematics/robot_model.py<a class="headerlink" href="#2-kinematicsrobot_modelpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~450<br />
+<strong>Status:</strong> NEEDS MINOR CLEANUP</p>
+<p><strong>Issues Found:</strong></p>
+<ol>
+<li><strong>Commented-out Alternative Implementation (Line 296)</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">#return [var_in &gt;&gt; i &amp; 1 for i in range(7,-1,-1)]</span>
+</code></pre></div></li>
+<li>Same pattern as serial_protocol.py</li>
+<li>New implementation verified on line 297</li>
+<li>
+<p><strong>Action:</strong> REMOVE</p>
+</li>
+<li>
+<p><strong>Large Test Code Block (Lines 301-334)</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="sd">    print(DEG2STEPS(180,2))</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="sd">    print(STEPS2DEG(57905,2))</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="sd">    ...</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="c1"># Test code with commented-out print statements</span>
+</code></pre></div></p>
+</li>
+<li>Large block of commented test code</li>
+<li>Appears to be unit testing</li>
+<li><strong>Action:</strong> REVIEW - Document purpose or remove</li>
+<li>Consider moving to separate test file if valuable</li>
+</ol>
+<p><strong>Positive Aspects:</strong>
+- Good function documentation
+- Clear conversion utilities
+- Well-organized</p>
+<h4 id="3-kinematicstrajectory_mathpy">3. kinematics/trajectory_math.py<a class="headerlink" href="#3-kinematicstrajectory_mathpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~300<br />
+<strong>Status:</strong> GOOD</p>
+<p><strong>Notes:</strong>
+- Trajectory calculation well-documented
+- Comments on old/previous implementations (acceptable)
+- Clear class structures</p>
+<h4 id="4-kinematicsinitpy">4. kinematics/<strong>init</strong>.py<a class="headerlink" href="#4-kinematicsinitpy" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~20<br />
+<strong>Status:</strong> NEEDS CLEANUP</p>
+<p><strong>Issues Found:</strong></p>
+<ol>
+<li><strong>Commented-out Import (Line 13)</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># from lib.kinematics import ik_solver, robot_model, trajectory_math</span>
+</code></pre></div></li>
+<li>Appears to be old import pattern</li>
+<li>No longer needed</li>
+<li><strong>Action:</strong> REMOVE</li>
+</ol>
+<h4 id="5-initpy-root-lib">5. <strong>init</strong>.py (root lib)<a class="headerlink" href="#5-initpy-root-lib" title="Permanent link">&para;</a></h4>
+<p><strong>LOC:</strong> ~10<br />
+<strong>Status:</strong> GOOD</p>
+<h3 id="lib-summary">Lib Summary<a class="headerlink" href="#lib-summary" title="Permanent link">&para;</a></h3>
+<p><strong>Grade: A-</strong></p>
+<p>Excellent overall quality. Lib module is the best-documented of all backend modules.</p>
+<p><strong>Cleanup Time:</strong> ~10 minutes</p>
+<p><strong>Action Items:</strong>
+1. Remove commented-out alternative at line 296 (2 min)
+2. Review/document test block in robot_model.py (5 min)
+3. Remove unused import comment in <strong>init</strong>.py (1 min)</p>
+<hr />
+<h2 id="consolidated-cleanup-table">CONSOLIDATED CLEANUP TABLE<a class="headerlink" href="#consolidated-cleanup-table" title="Permanent link">&para;</a></h2>
+<h3 id="by-priority">By Priority<a class="headerlink" href="#by-priority" title="Permanent link">&para;</a></h3>
+<h4 id="critical-must-fix">CRITICAL (Must Fix)<a class="headerlink" href="#critical-must-fix" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line(s)</th>
+<th>Issue</th>
+<th>Action</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/home/jacob/parol6/commander/commander.py</code></td>
+<td>1-9</td>
+<td>Outdated docstring</td>
+<td>UPDATE</td>
+<td>5-10 min</td>
+</tr>
+<tr>
+<td><code>/home/jacob/parol6/commander/commander.py</code></td>
+<td>527-528</td>
+<td>Non-English comments</td>
+<td>TRANSLATE</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td><code>/home/jacob/parol6/commander/commander.py</code></td>
+<td>531-533</td>
+<td>Commented debug code</td>
+<td>REMOVE</td>
+<td>2 min</td>
+</tr>
+<tr>
+<td><code>/home/jacob/parol6/commander/serial_protocol.py</code></td>
+<td>551</td>
+<td>Commented alternative</td>
+<td>REMOVE</td>
+<td>2 min</td>
+</tr>
+<tr>
+<td><code>/home/jacob/parol6/lib/kinematics/robot_model.py</code></td>
+<td>296</td>
+<td>Commented alternative</td>
+<td>REMOVE</td>
+<td>2 min</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Subtotal:</strong> ~16-26 minutes</p>
+<h4 id="high-priority-should-fix">HIGH PRIORITY (Should Fix)<a class="headerlink" href="#high-priority-should-fix" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line(s)</th>
+<th>Issue</th>
+<th>Action</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/home/jacob/parol6/lib/kinematics/robot_model.py</code></td>
+<td>301-334</td>
+<td>Test code block</td>
+<td>DOCUMENT/REMOVE</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td><code>/home/jacob/parol6/lib/kinematics/__init__.py</code></td>
+<td>13</td>
+<td>Commented import</td>
+<td>REMOVE</td>
+<td>1 min</td>
+</tr>
+<tr>
+<td><code>/home/jacob/parol6/api/fastapi_server.py</code></td>
+<td>~80</td>
+<td>Incomplete comment</td>
+<td>CLARIFY</td>
+<td>3 min</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Subtotal:</strong> ~9 minutes</p>
+<h4 id="medium-priority-nice-to-have">MEDIUM PRIORITY (Nice to Have)<a class="headerlink" href="#medium-priority-nice-to-have" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Issue</th>
+<th>Action</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All Python files</td>
+<td>Print statements in logging</td>
+<td>DOCUMENT (they're intentional)</td>
+<td>0 min</td>
+</tr>
+<tr>
+<td>All files</td>
+<td>Legacy/old references</td>
+<td>KEEP (helps maintainability)</td>
+<td>0 min</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="code-quality-observations">Code Quality Observations<a class="headerlink" href="#code-quality-observations" title="Permanent link">&para;</a></h2>
+<h3 id="strengths">Strengths<a class="headerlink" href="#strengths" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Excellent IK Solver Documentation</strong></li>
+<li>lib/kinematics/ik_solver.py is exemplary</li>
+<li>Professional docstrings</li>
+<li>
+<p>Clear parameter documentation</p>
+</li>
+<li>
+<p><strong>Good Overall Structure</strong></p>
+</li>
+<li>API well-organized</li>
+<li>Commander well-separated by concern</li>
+<li>
+<p>Lib centralized well</p>
+</li>
+<li>
+<p><strong>Appropriate Debug Output</strong></p>
+</li>
+<li>Print statements used strategically</li>
+<li>Logging setup clear</li>
+<li>Performance monitoring well-documented</li>
+</ol>
+<h3 id="weaknesses">Weaknesses<a class="headerlink" href="#weaknesses" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Outdated Documentation</strong></li>
+<li>commander.py docstring needs updating</li>
+<li>
+<p>References old repository structure</p>
+</li>
+<li>
+<p><strong>Code Cleanup Issues</strong></p>
+</li>
+<li>Commented-out code blocks (4 instances)</li>
+<li>Non-English comments</li>
+<li>
+<p>Commented test code</p>
+</li>
+<li>
+<p><strong>Minor Documentation Gaps</strong></p>
+</li>
+<li>Some functions could use docstrings</li>
+<li>Complex algorithms sometimes lack explanation</li>
+</ol>
+<hr />
+<h2 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Immediate (Next Session):</strong></li>
+<li>Remove all commented-out code blocks (7 instances total)</li>
+<li>Remove commented imports</li>
+<li>
+<p>Translate non-English comments</p>
+</li>
+<li>
+<p><strong>Short Term:</strong></p>
+</li>
+<li>Update commander.py docstring</li>
+<li>Review and document test code block</li>
+<li>
+<p>Clarify incomplete FastAPI comment</p>
+</li>
+<li>
+<p><strong>Ongoing:</strong></p>
+</li>
+<li>Continue using ik_solver.py as documentation standard</li>
+<li>Maintain clear docstrings on all new functions</li>
+<li>Keep legacy comments that document refactoring</li>
+<li>
+<p>Use appropriate logging (print for metrics, logger for info)</p>
+</li>
+<li>
+<p><strong>Best Practices:</strong></p>
+</li>
+<li>No commented-out code in production</li>
+<li>All comments in English</li>
+<li>Complete docstrings on public functions</li>
+<li>Clear explanation of complex algorithms</li>
+</ol>
+<hr />
+<h2 id="summary-statistics">Summary Statistics<a class="headerlink" href="#summary-statistics" title="Permanent link">&para;</a></h2>
+<h3 id="by-file-type">By File Type<a class="headerlink" href="#by-file-type" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Files</th>
+<th>LOC</th>
+<th>Status</th>
+<th>Grade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>api</td>
+<td>8</td>
+<td>4,862</td>
+<td>Good</td>
+<td>B+</td>
+</tr>
+<tr>
+<td>commander</td>
+<td>11</td>
+<td>6,777</td>
+<td>Good</td>
+<td>B</td>
+</tr>
+<tr>
+<td>lib</td>
+<td>5</td>
+<td>1,499</td>
+<td>Excellent</td>
+<td>A-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cleanup-effort">Cleanup Effort<a class="headerlink" href="#cleanup-effort" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Items</th>
+<th>Total Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critical</td>
+<td>5</td>
+<td>16-26 min</td>
+</tr>
+<tr>
+<td>High</td>
+<td>3</td>
+<td>~9 min</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>Multiple</td>
+<td>0 min</td>
+</tr>
+<tr>
+<td><strong>TOTAL</strong></td>
+<td><strong>8</strong></td>
+<td><strong>~35 minutes</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Review Completed:</strong> 2025-11-26<br />
+<strong>Backend Files:</strong> 24<br />
+<strong>Backend LOC:</strong> 13,138</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+    
+  </body>
+</html>
